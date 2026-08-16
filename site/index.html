@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>bioAPI — sequence file tools you can call over the web</title>
-<meta name="description" content="bioAPI does the routine jobs that come up whenever you handle DNA, RNA or protein files — summarising, cleaning, filtering, converting. You send it a file; it sends the result back. Nothing to install.">
+<title>bioAPI — REST API for sequence analysis</title>
+<meta name="description" content="A REST API for routine bioinformatics: sequence manipulation, FASTA and FASTQ utilities, file inspection, format conversion and VCF-driven consensus generation. Forty-four endpoints behind one response envelope.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230E1519'/><rect x='7' y='5' width='18' height='4' rx='2' fill='%231D8F4E'/><rect x='7' y='11' width='18' height='4' rx='2' fill='%232A62C4'/><rect x='7' y='17' width='18' height='4' rx='2' fill='%23C98A12'/><rect x='7' y='23' width='18' height='4' rx='2' fill='%23CE3B31'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,9 +18,9 @@
     <a class="mark" href="#top">bio<span>API</span></a>
     <span class="ver">v0.0.1</span>
     <nav class="topnav">
-      <a class="opt" href="#what-it-does">What it does</a>
-      <a class="opt" href="#glossary">In plain English</a>
-      <a class="opt" href="#try-it">Try it</a>
+      <a class="opt" href="#capabilities">Capabilities</a>
+      <a class="opt" href="#glossary">Glossary</a>
+      <a class="opt" href="#getting-started">Getting started</a>
       <a href="#roadmap">Roadmap</a>
       <a href="reference.html">API reference</a>
       <a href="https://github.com/bhagesh-h/bioAPI">GitHub&nbsp;↗</a>
@@ -33,8 +33,8 @@
 <!-- ============================ hero ============================ -->
 <section class="hero">
   <div class="wrap">
-    <p class="eyebrow">Tools for DNA, RNA and protein files</p>
-    <h1 style="max-width:20ch">Send a file.<br><em>Get an answer back.</em></h1>
+    <p class="eyebrow">Sequence analysis toolkit · REST API</p>
+    <h1 style="max-width:22ch">Sequence analysis<br><em>as a web service.</em></h1>
     <p class="lede">
       bioAPI does the routine jobs that come up whenever you handle sequence data —
       summarising a file, cleaning it up, filtering out poor-quality reads, converting
@@ -42,15 +42,15 @@
       to install on your own machine and no script to write.
     </p>
     <div class="cta">
-      <a class="btn" href="#what-it-does">What it does</a>
-      <a class="btn ghost" href="#try-it">Try it</a>
-      <a class="btn ghost" href="reference.html">All 44 operations</a>
+      <a class="btn" href="#capabilities">Capabilities</a>
+      <a class="btn ghost" href="#getting-started">Getting started</a>
+      <a class="btn ghost" href="reference.html">All 44 endpoints</a>
     </div>
 
     <figure class="strand anim" id="strand">
       <div class="strand-head">
         <span class="op">Reverse complement</span>
-        <span class="note">one of the 44 things it can do</span>
+        <span class="note">one of 44 available operations</span>
       </div>
       <div class="ladder">
         <div class="rung" id="r-top"><span class="tick">5'</span></div>
@@ -73,19 +73,19 @@
 </section>
 
 <!-- ============================ audience ============================ -->
-<section class="section" id="who">
+<section class="section" id="audience">
   <div class="wrap">
-    <p class="eyebrow">Where to start</p>
-    <h2>Two ways in</h2>
+    <p class="eyebrow">Audience</p>
+    <h2>Intended users</h2>
     <p class="lede" style="margin-top:1rem">
-      Most people arrive here knowing one half of this and not the other. Both halves are
-      explained on this page.
+      This documentation assumes no prior knowledge of either the biology or the
+      web-service conventions. Both are covered below.
     </p>
 
     <div class="audience">
       <div class="card">
-        <span class="who">If you work at the bench</span>
-        <h3>You know the biology. The computing is the unfamiliar part.</h3>
+        <span class="who">Laboratory and research users</span>
+        <h3>No programming required</h3>
         <p>
           You do not have to write code to use this. Once it is running, it comes with a
           web page where you pick an operation, upload your file, press a button and read
@@ -95,8 +95,8 @@
         </p>
       </div>
       <div class="card">
-        <span class="who">If you write software</span>
-        <h3>You know the plumbing. The biology vocabulary is the unfamiliar part.</h3>
+        <span class="who">Software developers</span>
+        <h3>A conventional REST interface</h3>
         <p>
           It is an ordinary REST API: JSON in, JSON in one consistent envelope out, an
           OpenAPI document, health probes and Prometheus metrics. What needs explaining is
@@ -110,10 +110,10 @@
 </section>
 
 <!-- ============================ what it does ============================ -->
-<section class="section" id="what-it-does">
+<section class="section" id="capabilities">
   <div class="wrap">
-    <p class="eyebrow">What it does</p>
-    <h2>Six kinds of job</h2>
+    <p class="eyebrow">Capabilities</p>
+    <h2>Operation categories</h2>
     <p class="lede" style="margin-top:1rem">
       Forty-four operations in total. They fall into six groups, described here in ordinary
       words; the exact names, inputs and outputs are in the
@@ -123,7 +123,7 @@
     <div class="tasks">
       <div class="task">
         <div>
-          <h3>Work on a single sequence</h3>
+          <h3>Single-sequence operations</h3>
           <span class="n">11 operations</span>
         </div>
         <div>
@@ -141,7 +141,7 @@
 
       <div class="task">
         <div>
-          <h3>Tidy up a sequence file</h3>
+          <h3>FASTA file manipulation</h3>
           <span class="n">14 operations</span>
         </div>
         <div>
@@ -161,7 +161,7 @@
 
       <div class="task">
         <div>
-          <h3>Handle sequencing reads</h3>
+          <h3>FASTQ and read quality</h3>
           <span class="n">5 operations</span>
         </div>
         <div>
@@ -179,7 +179,7 @@
 
       <div class="task">
         <div>
-          <h3>Inspect a file you were handed</h3>
+          <h3>File inspection and format detection</h3>
           <span class="n">4 operations</span>
         </div>
         <div>
@@ -197,7 +197,7 @@
 
       <div class="task">
         <div>
-          <h3>Convert between formats</h3>
+          <h3>Format conversion</h3>
           <span class="n">2 operations</span>
         </div>
         <div>
@@ -215,7 +215,7 @@
 
       <div class="task">
         <div>
-          <h3>Ask what it supports</h3>
+          <h3>Service capabilities and health</h3>
           <span class="n">1 operation, plus 7 status checks</span>
         </div>
         <div>
@@ -232,10 +232,10 @@
 </section>
 
 <!-- ============================ how it fits together ============================ -->
-<section class="section" id="how-it-fits">
+<section class="section" id="interoperability">
   <div class="wrap">
-    <p class="eyebrow">How it fits together</p>
-    <h2>What you have, and what you can turn it into</h2>
+    <p class="eyebrow">Data flow</p>
+    <h2>Endpoint interoperability</h2>
     <p class="lede" style="margin-top:1rem">
       The boxes are the kinds of data you might be holding. The arrows are the operations
       that turn one into another, so a chain reads left to right: a FASTQ file becomes a
@@ -343,8 +343,8 @@
 <!-- ============================ glossary ============================ -->
 <section class="section" id="glossary">
   <div class="wrap">
-    <p class="eyebrow">In plain English</p>
-    <h2>The words, explained</h2>
+    <p class="eyebrow">Glossary</p>
+    <h2>Terminology</h2>
     <p class="lede" style="margin-top:1rem">
       Every term used on this site and in the reference, in one place. The left column is
       the biology, the right column is the computing.
@@ -466,10 +466,10 @@
 </section>
 
 <!-- ============================ try it ============================ -->
-<section class="section" id="try-it">
+<section class="section" id="getting-started">
   <div class="wrap">
-    <p class="eyebrow">Try it</p>
-    <h2>Running in three steps</h2>
+    <p class="eyebrow">Getting started</p>
+    <h2>Installation and first request</h2>
     <p class="lede" style="margin-top:1rem">
       Everything runs on your own machine, so your files stay on it. The only thing you need
       installed first is Docker, which is a free download.
@@ -479,7 +479,7 @@
       <div class="step">
         <div>
           <span class="num">STEP 1</span>
-          <h3>Start it</h3>
+          <h3>Start the service</h3>
           <p>
             Paste these three lines into a terminal. The first download takes a few minutes;
             after that it starts in seconds.
@@ -495,7 +495,7 @@
       <div class="step">
         <div>
           <span class="num">STEP 2</span>
-          <h3>Use it without writing code</h3>
+          <h3>Interactive browser interface</h3>
           <p>
             Open this address in your browser. You get a page listing every operation: pick
             one, fill in the boxes or upload a file, press Execute, read the answer.
@@ -510,7 +510,7 @@
       <div class="step">
         <div>
           <span class="num">STEP 3</span>
-          <h3>Or call it from a program</h3>
+          <h3>Programmatic access</h3>
           <p>
             Every operation is also a plain web request, so any language can drive it. This
             one asks for the opposite strand of a short sequence.
@@ -536,7 +536,7 @@
 <section class="section" id="roadmap">
   <div class="wrap">
     <p class="eyebrow">Roadmap</p>
-    <h2>What is not here yet</h2>
+    <h2>Known gaps and candidate features</h2>
     <p class="lede" style="margin-top:1rem">
       Worth being straight about the gaps. These are candidates drawn from comparing bioAPI
       against <a href="https://bioinf.shenwei.me/seqkit/">SeqKit</a>, the closest
@@ -549,8 +549,8 @@
     <div class="tasks">
       <div class="task">
         <div>
-          <h3>Primer and protein questions</h3>
-          <span class="n">Nothing new to install</span>
+          <h3>Primer and protein analysis</h3>
+          <span class="n">No new dependencies</span>
         </div>
         <div>
           <p>
@@ -567,8 +567,8 @@
 
       <div class="task">
         <div>
-          <h3>Operations on a whole file</h3>
-          <span class="n">Single sequences only today</span>
+          <h3>File-level operations</h3>
+          <span class="n">Currently single-sequence only</span>
         </div>
         <div>
           <p>
@@ -585,8 +585,8 @@
 
       <div class="task">
         <div>
-          <h3>Sequencing reality</h3>
-          <span class="n">The clearest gap</span>
+          <h3>Sequencing workflow support</h3>
+          <span class="n">Highest-priority gap</span>
         </div>
         <div>
           <p>
@@ -604,7 +604,7 @@
 
       <div class="task">
         <div>
-          <h3>Bigger inputs</h3>
+          <h3>Large input handling</h3>
           <span class="n">Currently capped at 50 MB</span>
         </div>
         <div>
