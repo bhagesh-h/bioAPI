@@ -1,0 +1,70 @@
+# Docker is the only supported way to build, run and test bioAPI.
+#
+#   docker compose up api                 # serve on http://127.0.0.1:8000
+#   docker compose run --rm test          # full test suite + coverage gate
+#   docker compose run --rm lint          # ruff + mypy
+#
+# The `test` and `lint` services bind-mount the source tree so a code change is
+# picked up without rebuilding the image.
+
+name: bioapi
+
+services:
+  api:
+    build:
+      context: .
+      target: runtime
+    image: bioapi:latest
+    container_name: bioapi
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    env_file:
+      - path: .env
+        required: false
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health/live"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  test:
+    build:
+      context: .
+      target: dev
+    image: bioapi:dev
+    working_dir: /app
+    environment:
+      ENVIRONMENT: test
+      LOG_LEVEL: WARNING
+      RATE_LIMIT_ENABLED: "false"
+      METRICS_ENABLED: "false"
+    volumes:
+      - ./app:/app/app:ro
+      - ./tests:/app/tests:ro
+      - ./pyproject.toml:/app/pyproject.toml:ro
+    command: ["pytest"]
+
+  lint:
+    image: bioapi:dev
+    working_dir: /app
+    volumes:
+      - ./app:/app/app:ro
+      - ./tests:/app/tests:ro
+      - ./pyproject.toml:/app/pyproject.toml:ro
+    command: ["sh", "-c", "ruff check app tests && ruff format --check app tests && mypy app"]
+
+  # Same tooling as `lint`, but mounted read-write so it can rewrite the source.
+  format:
+    image: bioapi:dev
+    user: root
+    working_dir: /app
+    volumes:
+      - ./app:/app/app
+      - ./tests:/app/tests
+      - ./pyproject.toml:/app/pyproject.toml:ro
+    command: ["sh", "-c", "ruff format app tests && ruff check --fix app tests"]

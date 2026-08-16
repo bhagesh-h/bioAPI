@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, type-check and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # The whole toolchain lives in the image; the runner never installs Python.
+      - name: Build the dev image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: dev
+          tags: bioapi:dev
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Lint, format check and mypy
+        run: docker compose run --rm lint
+
+      - name: Tests with the coverage gate
+        run: docker compose run --rm test
+
+  image:
+    name: Build and smoke-test the runtime image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build the runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          tags: bioapi:ci
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start the container
+        run: docker run -d --name bioapi-ci -p 8000:8000 bioapi:ci
+
+      - name: Wait for the healthcheck to pass
+        run: |
+          for _ in $(seq 1 30); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' bioapi-ci)
+            if [ "$status" = "healthy" ]; then exit 0; fi
+            if [ "$status" = "unhealthy" ]; then break; fi
+            sleep 2
+          done
+          echo "container never became healthy"
+          docker logs bioapi-ci
+          exit 1
+
+      - name: Probe the public surface
+        run: |
+          set -euo pipefail
+          curl -fsS http://127.0.0.1:8000/health/ready | grep -q '"status":"ready"'
+          curl -fsS http://127.0.0.1:8000/api/v1/openapi.json > /dev/null
+          curl -fsS -X POST http://127.0.0.1:8000/api/v1/sequences/reverse-complement \
+            -H 'Content-Type: application/json' \
+            -d '{"sequence":"ATGC","alphabet":"dna"}' | grep -q '"result":"GCAT"'
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker logs bioapi-ci
+
+      - name: Stop the container
+        if: always()
+        run: docker rm -f bioapi-ci

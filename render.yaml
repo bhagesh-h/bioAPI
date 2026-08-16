@@ -1,0 +1,31 @@
+# Render blueprint. The service is deployed from the same Dockerfile used
+# locally and in CI, so what runs in production is the image that was tested.
+
+services:
+  - type: web
+    name: bioapi
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /health/ready
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: LOG_FORMAT
+        value: json
+      - key: LOG_LEVEL
+        value: INFO
+      - key: MAX_UPLOAD_SIZE_MB
+        value: "50"
+      - key: RATE_LIMIT_ENABLED
+        value: "true"
+      - key: RATE_LIMIT_DEFAULT
+        value: 120/minute
+      # Restrict this to your own front-end origins before going live.
+      - key: BACKEND_CORS_ORIGINS
+        value: "*"
+      - key: API_KEY
+        generateValue: true

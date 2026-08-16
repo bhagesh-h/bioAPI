@@ -1,0 +1,42 @@
+# Keep the build context small and free of secrets.
+
+.git
+.gitignore
+.github
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+
+# Python caches and build output
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Docs and editor files
+docs/
+*.md
+!README.md
+.vscode/
+.idea/
+
+# Local scratch data
+tmp/
+test_data/
+*.bam
+*.bai
+*.sam
