@@ -3,292 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>bioAPI — a REST API for everyday bioinformatics</title>
-<meta name="description" content="Sequence manipulation, FASTA and FASTQ utilities, file analysis, format conversion and VCF-driven consensus generation over HTTP. Built on FastAPI, Biopython and pysam.">
+<title>bioAPI — sequence file tools you can call over the web</title>
+<meta name="description" content="bioAPI does the routine jobs that come up whenever you handle DNA, RNA or protein files — summarising, cleaning, filtering, converting. You send it a file; it sends the result back. Nothing to install.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230E1519'/><rect x='7' y='5' width='18' height='4' rx='2' fill='%231D8F4E'/><rect x='7' y='11' width='18' height='4' rx='2' fill='%232A62C4'/><rect x='7' y='17' width='18' height='4' rx='2' fill='%23C98A12'/><rect x='7' y='23' width='18' height='4' rx='2' fill='%23CE3B31'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-/* ---- tokens -------------------------------------------------------- */
-:root {
-  --paper:  #EAEEF1;
-  --panel:  #F8FAFB;
-  --ink:    #0E1519;
-  --ink-2:  #55636E;
-  --ink-3:  #7C8A95;
-  --rule:   #C6D0D7;
-  --rule-2: #DBE3E8;
-  --accent: #1B57B8;
-  --accent-soft: #E2EAF7;
-  /* Sanger trace colours — the only place colour is spent */
-  --base-a: #1D8F4E;
-  --base-c: #2A62C4;
-  --base-g: #B5790C;
-  --base-t: #CE3B31;
-
-  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-
-  --gap: clamp(3.5rem, 8vw, 6.5rem);
-  --pad: clamp(1.25rem, 4vw, 2.5rem);
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper:  #0D1317;
-    --panel:  #141D23;
-    --ink:    #E5EBEF;
-    --ink-2:  #98A7B3;
-    --ink-3:  #6F808C;
-    --rule:   #26333C;
-    --rule-2: #1C272E;
-    --accent: #7CACFF;
-    --accent-soft: #17252F;
-    --base-a: #4BC47D;
-    --base-c: #6E9EF5;
-    --base-g: #E0A93A;
-    --base-t: #F0665A;
-  }
-}
-
-/* ---- base ---------------------------------------------------------- */
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 5rem; -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font: 400 1rem/1.65 var(--sans);
-  font-feature-settings: "kern", "liga";
-  -webkit-font-smoothing: antialiased;
-}
-a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
-a:hover { text-decoration-thickness: 2px; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
-h1, h2, h3 { font-family: var(--mono); font-weight: 600; letter-spacing: -0.02em; margin: 0; }
-p { margin: 0 0 1rem; }
-p:last-child { margin-bottom: 0; }
-code { font-family: var(--mono); font-size: 0.9em; }
-
-.wrap { max-width: 1080px; margin: 0 auto; padding-inline: var(--pad); }
-.section { padding-block: var(--gap); border-top: 1px solid var(--rule-2); }
-.section h2 { font-size: clamp(1.5rem, 3.2vw, 2.1rem); letter-spacing: -0.035em; line-height: 1.15; }
-.eyebrow {
-  font: 500 0.75rem/1 var(--mono);
-  letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--ink-3); margin: 0 0 1.25rem;
-}
-.lede { font-size: clamp(1.02rem, 1.6vw, 1.15rem); color: var(--ink-2); max-width: 62ch; }
-
-/* ---- header -------------------------------------------------------- */
-.topbar {
-  position: sticky; top: 0; z-index: 20;
-  background: var(--paper);
-  background: color-mix(in srgb, var(--paper) 88%, transparent);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--rule-2);
-}
-.topbar .wrap { display: flex; align-items: center; gap: 1rem; height: 3.5rem; }
-.mark { font: 600 1.0625rem/1 var(--mono); letter-spacing: -0.03em; color: var(--ink); text-decoration: none; }
-.mark span { color: var(--base-a); }
-.ver {
-  font: 500 0.6875rem/1 var(--mono); letter-spacing: 0.06em;
-  color: var(--ink-2); border: 1px solid var(--rule); border-radius: 999px;
-  padding: 0.28rem 0.5rem;
-}
-.topnav { margin-left: auto; display: flex; gap: 1.25rem; }
-.topnav a {
-  font: 500 0.8125rem/1 var(--mono); color: var(--ink-2);
-  text-decoration: none; letter-spacing: -0.01em;
-}
-.topnav a:hover { color: var(--ink); }
-@media (max-width: 880px) { .topnav a.opt { display: none; } }
-@media (max-width: 560px) {
-  .topbar .wrap { gap: 0.75rem; }
-  .topnav { gap: 0.9rem; }
-  .ver { display: none; }  /* the version is still in the footer */
-}
-
-/* ---- hero ---------------------------------------------------------- */
-.hero { padding-block: clamp(2.75rem, 6vw, 4.5rem) clamp(3rem, 6vw, 4.5rem); }
-.hero h1 {
-  font-size: clamp(2.3rem, 6.4vw, 4rem);
-  line-height: 1.02; letter-spacing: -0.045em;
-  margin: 0 0 1.5rem; max-width: 16ch;
-}
-.hero h1 em { font-style: normal; color: var(--ink-3); }
-.hero .lede { margin-bottom: 2rem; }
-.cta { display: flex; flex-wrap: wrap; gap: 0.75rem; }
-.btn {
-  font: 500 0.875rem/1 var(--mono); text-decoration: none;
-  padding: 0.7rem 1.1rem; border-radius: 3px; border: 1px solid var(--ink);
-  background: var(--ink); color: var(--paper); transition: transform 0.12s ease;
-}
-.btn:hover { transform: translateY(-1px); }
-.btn.ghost { background: transparent; color: var(--ink); border-color: var(--rule); }
-.btn.ghost:hover { border-color: var(--ink); }
-
-/* ---- signature: the strand ------------------------------------------ */
-.strand {
-  margin: clamp(2.5rem, 6vw, 4rem) 0 0;
-  width: fit-content; max-width: 100%;
-  border: 1px solid var(--rule); border-radius: 4px;
-  background: var(--panel); padding: clamp(1.1rem, 3vw, 1.9rem);
-  overflow-x: auto;
-}
-.strand-head {
-  display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: baseline;
-  margin-bottom: 1.4rem;
-}
-.strand-head .op { font: 500 0.8125rem/1 var(--mono); color: var(--ink); }
-.strand-head .op-path { color: var(--base-c); font-weight: 600; }
-.strand-head .note { font: 400 0.75rem/1 var(--mono); color: var(--ink-3); }
-.ladder { display: grid; gap: 0.28rem; width: max-content; min-width: 100%; }
-.rung { display: flex; align-items: center; gap: clamp(0.12rem, 0.6vw, 0.3rem); }
-.tick {
-  font: 500 clamp(0.6rem, 1.7vw, 0.75rem)/1 var(--mono);
-  color: var(--ink-3); width: 2.1em; flex: none;
-}
-.tick.r { text-align: right; }
-.b {
-  font: 500 clamp(0.72rem, 2.4vw, 1.15rem)/1.5 var(--mono);
-  width: clamp(1.05rem, 3.2vw, 1.55rem); flex: none;
-  text-align: center; border-radius: 2px;
-}
-.b[data-b="A"] { color: var(--base-a); }
-.b[data-b="C"] { color: var(--base-c); }
-.b[data-b="G"] { color: var(--base-g); }
-.b[data-b="T"] { color: var(--base-t); }
-.pair { color: var(--ink-3); opacity: 0.55; }
-.strand-out {
-  margin-top: 1.4rem; padding-top: 1.1rem; border-top: 1px dashed var(--rule);
-  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 0.9rem;
-}
-.strand-out .lbl {
-  font: 500 0.6875rem/1 var(--mono); letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--ink-3);
-}
-.strand-out .val { font: 600 clamp(0.85rem, 2.4vw, 1.05rem)/1 var(--mono); letter-spacing: 0.04em; }
-
-/* load sequence */
-.anim .b, .anim .pair, .anim .strand-out { opacity: 0; }
-.anim.go .b, .anim.go .pair { animation: rise 0.34s ease-out forwards; }
-.anim.go .strand-out { animation: rise 0.4s ease-out 0.95s forwards; }
-@keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) {
-  .anim .b, .anim .pair, .anim .strand-out { opacity: 1 !important; animation: none !important; }
-  html { scroll-behavior: auto; }
-}
-
-/* ---- two-column blocks --------------------------------------------- */
-.cols { display: grid; gap: clamp(1.5rem, 4vw, 2.5rem); }
-/* without this a long <pre> line widens its track instead of scrolling */
-.cols > * { min-width: 0; }
-@media (min-width: 860px) { .cols { grid-template-columns: 1fr 1fr; } }
-
-pre {
-  margin: 0; padding: 1rem 1.1rem; overflow-x: auto;
-  background: var(--panel); border: 1px solid var(--rule-2); border-radius: 4px;
-  font: 400 0.8125rem/1.7 var(--mono); color: var(--ink);
-  tab-size: 2;
-}
-/* Syntax roles reuse the trace palette, so the page keeps one colour language:
-   amber = the command, blue = the address, green = the data, red = literals. */
-pre .c   { color: var(--ink-3); }                    /* comment */
-pre .cmd { color: var(--base-g); font-weight: 600; } /* the program being run */
-pre .sub { color: var(--ink); font-weight: 500; }    /* its subcommand */
-pre .flg { color: var(--ink-2); }                    /* option flags */
-pre .mth { color: var(--ink); font-weight: 600; }    /* HTTP method */
-pre .url { color: var(--ink-2); }                    /* scheme and host */
-pre .ep  { color: var(--base-c); font-weight: 600; } /* the endpoint path */
-pre .str { color: var(--base-a); }                   /* string literal */
-pre .key { color: var(--base-c); }                   /* JSON key */
-pre .lit { color: var(--base-t); }                   /* number, boolean, null */
-.blocktitle {
-  font: 500 0.6875rem/1 var(--mono); letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--ink-3); margin: 0 0 0.7rem;
-}
-
-/* ---- features ------------------------------------------------------ */
-.feats { display: grid; gap: 0; margin-top: 2.5rem; border-top: 1px solid var(--rule-2); }
-@media (min-width: 800px) { .feats { grid-template-columns: 1fr 1fr; column-gap: clamp(2rem, 5vw, 4rem); } }
-.feat { padding: 1.5rem 0; border-bottom: 1px solid var(--rule-2); }
-.feat h3 { font-size: 0.9375rem; letter-spacing: -0.01em; margin-bottom: 0.5rem; }
-.feat p { font-size: 0.9375rem; color: var(--ink-2); margin: 0; }
-
-/* ---- endpoints ----------------------------------------------------- */
-.filterbar {
-  display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: center;
-  margin-top: 2rem;
-}
-#filter {
-  flex: 1 1 16rem; min-width: 0; appearance: none; -webkit-appearance: none;
-  font: 400 0.875rem/1 var(--mono); color: var(--ink);
-  background: var(--panel); border: 1px solid var(--rule); border-radius: 3px;
-  padding: 0.7rem 0.85rem;
-}
-#filter::placeholder { color: var(--ink-3); }
-#count { font: 400 0.75rem/1 var(--mono); color: var(--ink-3); }
-
-.group { margin-top: 3rem; }
-.group-head {
-  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 0.9rem;
-  padding-bottom: 0.75rem; border-bottom: 1px solid var(--rule);
-}
-.group-head h3 { font-size: 1.0625rem; letter-spacing: -0.02em; }
-.group-head .path {
-  font: 500 0.75rem/1 var(--mono); color: var(--base-c);
-  background: var(--accent-soft); border: 1px solid var(--rule-2);
-  border-radius: 2px; padding: 0.3rem 0.45rem;
-}
-.group-head .n { font: 400 0.75rem/1 var(--mono); color: var(--ink-3); margin-left: auto; }
-.group-note { font-size: 0.875rem; color: var(--ink-2); margin: 0.9rem 0 0; max-width: 74ch; }
-.group-note code { color: var(--ink); }
-
-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
-th, td { text-align: left; vertical-align: top; padding: 0.7rem 0.9rem 0.7rem 0; border-bottom: 1px solid var(--rule-2); }
-th {
-  font: 500 0.6875rem/1 var(--mono); letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--ink-3); padding-top: 1rem;
-}
-td { font-size: 0.9375rem; }
-td.p { white-space: nowrap; }
-td:last-child, th:last-child { padding-right: 0; }
-
-.m {
-  display: inline-block; min-width: 3.1rem; text-align: center;
-  font: 500 0.6875rem/1 var(--mono); letter-spacing: 0.06em;
-  padding: 0.28rem 0.4rem; border-radius: 2px; margin-right: 0.55rem;
-  border: 1px solid var(--rule); color: var(--ink-2); background: transparent;
-}
-.m.post { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-td.p code { font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; }
-/* Only the endpoint tables get the path colour — not the status-code,
-   header and configuration tables, which also use td.p. */
-[data-group] td.p code { color: var(--base-c); }
-td.f { color: var(--ink-2); font-size: 0.875rem; }
-td.f code { color: var(--ink); white-space: nowrap; }
-.dep { font: 500 0.625rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--base-t); }
-.tablewrap { overflow-x: auto; }
-
-/* ---- reference ----------------------------------------------------- */
-.subsec { margin-top: 3rem; }
-.subsec:first-of-type { margin-top: 2.5rem; }
-.subsec h3 { font-size: 1rem; margin-bottom: 0.4rem; }
-.subsec > p { font-size: 0.9375rem; color: var(--ink-2); max-width: 74ch; }
-.codes { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
-.codes code {
-  font-size: 0.75rem; padding: 0.32rem 0.5rem; border-radius: 2px;
-  background: var(--accent-soft); color: var(--ink); border: 1px solid var(--rule-2);
-}
-
-/* ---- footer -------------------------------------------------------- */
-footer { border-top: 1px solid var(--rule-2); padding-block: 2.5rem 3.5rem; }
-footer .wrap { display: flex; flex-wrap: wrap; gap: 0.75rem 1.75rem; align-items: baseline; }
-footer p, footer a { font: 400 0.8125rem/1.6 var(--mono); color: var(--ink-3); margin: 0; }
-footer a { color: var(--ink-2); text-decoration: none; }
-footer a:hover { color: var(--accent); text-decoration: underline; }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -297,10 +18,11 @@ footer a:hover { color: var(--accent); text-decoration: underline; }
     <a class="mark" href="#top">bio<span>API</span></a>
     <span class="ver">v0.0.1</span>
     <nav class="topnav">
-      <a class="opt" href="#getting-started">Getting started</a>
-      <a class="opt" href="#capabilities">Capabilities</a>
-      <a href="#api-reference">API reference</a>
-      <a href="#specification">Specification</a>
+      <a class="opt" href="#what-it-does">What it does</a>
+      <a class="opt" href="#glossary">In plain English</a>
+      <a class="opt" href="#try-it">Try it</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="reference.html">API reference</a>
       <a href="https://github.com/bhagesh-h/bioAPI">GitHub&nbsp;↗</a>
     </nav>
   </div>
@@ -311,23 +33,24 @@ footer a:hover { color: var(--accent); text-decoration: underline; }
 <!-- ============================ hero ============================ -->
 <section class="hero">
   <div class="wrap">
-    <p class="eyebrow">rest api · fastapi · biopython · pysam</p>
-    <h1>Sequence work, <em>over HTTP.</em></h1>
+    <p class="eyebrow">Tools for DNA, RNA and protein files</p>
+    <h1 style="max-width:20ch">Send a file.<br><em>Get an answer back.</em></h1>
     <p class="lede">
-      Reverse-complement a read, compute N50, filter a FASTQ by mean quality, convert
-      GenBank to FASTA, or apply a VCF to a reference — as HTTP calls, with one response
-      shape for every endpoint. Runs in a container; there is nothing to install.
+      bioAPI does the routine jobs that come up whenever you handle sequence data —
+      summarising a file, cleaning it up, filtering out poor-quality reads, converting
+      between formats. You hand it a file, it hands back the result. There is no software
+      to install on your own machine and no script to write.
     </p>
     <div class="cta">
-      <a class="btn" href="#getting-started">Get started</a>
-      <a class="btn ghost" href="#api-reference">All 44 endpoints</a>
-      <a class="btn ghost" href="https://github.com/bhagesh-h/bioAPI">Source</a>
+      <a class="btn" href="#what-it-does">What it does</a>
+      <a class="btn ghost" href="#try-it">Try it</a>
+      <a class="btn ghost" href="reference.html">All 44 operations</a>
     </div>
 
     <figure class="strand anim" id="strand">
       <div class="strand-head">
-        <span class="op">POST <span class="op-path">/api/v1/sequences/reverse-complement</span></span>
-        <span class="note">the opposite strand, read 5'→3'</span>
+        <span class="op">Reverse complement</span>
+        <span class="note">one of the 44 things it can do</span>
       </div>
       <div class="ladder">
         <div class="rung" id="r-top"><span class="tick">5'</span></div>
@@ -335,473 +58,565 @@ footer a:hover { color: var(--accent); text-decoration: underline; }
         <div class="rung" id="r-bot"><span class="tick">3'</span></div>
       </div>
       <figcaption class="strand-out">
-        <span class="lbl">result</span>
+        <span class="lbl">answer</span>
         <span class="val" id="rc"></span>
+        <span class="call">POST /api/v1/sequences/reverse-complement</span>
       </figcaption>
     </figure>
+    <p class="strand-why">
+      DNA has two strands that mirror each other, and reading the second one is something
+      you end up doing constantly. Give bioAPI the strand you have and it returns the other
+      one. Every other operation works the same way: send what you have, get back what you
+      wanted.
+    </p>
   </div>
 </section>
 
-<!-- ============================ quick start ============================ -->
-<section class="section" id="getting-started">
+<!-- ============================ audience ============================ -->
+<section class="section" id="who">
   <div class="wrap">
-    <p class="eyebrow">Getting started</p>
-    <h2>Docker is the only supported toolchain</h2>
+    <p class="eyebrow">Where to start</p>
+    <h2>Two ways in</h2>
     <p class="lede" style="margin-top:1rem">
-      pysam's C extensions build once, inside an image where they are known to work,
-      rather than on each contributor's laptop. There is no host virtualenv and no
-      <code>pip install</code>.
+      Most people arrive here knowing one half of this and not the other. Both halves are
+      explained on this page.
     </p>
 
-    <div class="cols" style="margin-top:2.5rem">
-      <div>
-        <p class="blocktitle">run it</p>
-<pre><span class="c"># the API comes up on 127.0.0.1:8000</span>
-<span class="cmd">git</span> <span class="sub">clone</span> <span class="url">https://github.com/bhagesh-h/bioAPI.git</span>
+    <div class="audience">
+      <div class="card">
+        <span class="who">If you work at the bench</span>
+        <h3>You know the biology. The computing is the unfamiliar part.</h3>
+        <p>
+          You do not have to write code to use this. Once it is running, it comes with a
+          web page where you pick an operation, upload your file, press a button and read
+          the answer — the same way you would use any online tool, except it runs on your
+          own machine and your files never leave it. The computing words are explained
+          <a href="#glossary">below</a>.
+        </p>
+      </div>
+      <div class="card">
+        <span class="who">If you write software</span>
+        <h3>You know the plumbing. The biology vocabulary is the unfamiliar part.</h3>
+        <p>
+          It is an ordinary REST API: JSON in, JSON in one consistent envelope out, an
+          OpenAPI document, health probes and Prometheus metrics. What needs explaining is
+          what a FASTQ file is and why anyone wants its N50 — also
+          <a href="#glossary">below</a>. The full route list is in the
+          <a href="reference.html">API reference</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ what it does ============================ -->
+<section class="section" id="what-it-does">
+  <div class="wrap">
+    <p class="eyebrow">What it does</p>
+    <h2>Six kinds of job</h2>
+    <p class="lede" style="margin-top:1rem">
+      Forty-four operations in total. They fall into six groups, described here in ordinary
+      words; the exact names, inputs and outputs are in the
+      <a href="reference.html">API reference</a>.
+    </p>
+
+    <div class="tasks">
+      <div class="task">
+        <div>
+          <h3>Work on a single sequence</h3>
+          <span class="n">11 operations</span>
+        </div>
+        <div>
+          <p>
+            Paste in one stretch of DNA, RNA or protein and get something back about it, or
+            a transformed version of it.
+          </p>
+          <p class="eg">
+            Read the opposite strand · turn DNA into RNA · translate it into the protein it
+            codes for · measure how much of it is G and C · find every position where a
+            short pattern occurs · count repeated chunks · check whether it is valid at all.
+          </p>
+        </div>
+      </div>
+
+      <div class="task">
+        <div>
+          <h3>Tidy up a sequence file</h3>
+          <span class="n">14 operations</span>
+        </div>
+        <div>
+          <p>
+            Take a FASTA file — a text file holding many named sequences — and reshape it.
+            This is the group people use most, because real files are never quite in the
+            shape you need.
+          </p>
+          <p class="eg">
+            Summarise what is in it · keep only sequences within a length range · take the
+            first N or a random sample · split one file into several or merge several into
+            one · shorten over-long names · rename entries · strip out unexpected characters
+            · remove duplicates · list the names.
+          </p>
+        </div>
+      </div>
+
+      <div class="task">
+        <div>
+          <h3>Handle sequencing reads</h3>
+          <span class="n">5 operations</span>
+        </div>
+        <div>
+          <p>
+            A sequencing machine outputs FASTQ: the same sequences, but each base carries a
+            score saying how confident the machine was. These operations use those scores.
+          </p>
+          <p class="eg">
+            Report the average quality and what fraction of bases clear the usual Q20 and
+            Q30 bars · throw away reads that fall below a threshold · drop the scores to get
+            a plain FASTA · compress and decompress.
+          </p>
+        </div>
+      </div>
+
+      <div class="task">
+        <div>
+          <h3>Inspect a file you were handed</h3>
+          <span class="n">4 operations</span>
+        </div>
+        <div>
+          <p>
+            Upload any sequence file and find out what it actually is and what is inside it.
+            It works out the format by reading the contents, not by trusting the filename —
+            so a FASTA file someone saved as <code>.txt</code> is still recognised.
+          </p>
+          <p class="eg">
+            Identify the format and summarise it · pull out the gene sequences listed in an
+            annotation file · list the variants of a given kind in a VCF.
+          </p>
+        </div>
+      </div>
+
+      <div class="task">
+        <div>
+          <h3>Convert between formats</h3>
+          <span class="n">2 operations</span>
+        </div>
+        <div>
+          <p>
+            The same sequences get stored in a handful of different text formats, and the
+            tool you want to use next rarely reads the one you have.
+          </p>
+          <p class="eg">
+            Convert between FASTA, GenBank, EMBL, tab-separated and JSON · apply a list of
+            variants to a reference genome to produce that sample's own version of the
+            sequence.
+          </p>
+        </div>
+      </div>
+
+      <div class="task">
+        <div>
+          <h3>Ask what it supports</h3>
+          <span class="n">1 operation, plus 7 status checks</span>
+        </div>
+        <div>
+          <p>
+            One address reports which conversions are possible and, for the ones that are
+            not, why not — so a program using bioAPI can ask rather than guess. Alongside it
+            are the addresses that report whether the service is alive and which versions it
+            is running.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ how it fits together ============================ -->
+<section class="section" id="how-it-fits">
+  <div class="wrap">
+    <p class="eyebrow">How it fits together</p>
+    <h2>What you have, and what you can turn it into</h2>
+    <p class="lede" style="margin-top:1rem">
+      The boxes are the kinds of data you might be holding. The arrows are the operations
+      that turn one into another, so a chain reads left to right: a FASTQ file becomes a
+      FASTA file, and a FASTA file gives you GC content and N50.
+      <strong style="color:var(--ink);font-weight:500">Click any box</strong> to see the
+      endpoints that accept it.
+    </p>
+
+    <div class="dag">
+      <svg viewBox="0 0 920 375" role="img" aria-label="Diagram of which bioAPI operations turn one kind of data into another">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z"/>
+          </marker>
+          <marker id="arrow-on" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z"/>
+          </marker>
+        </defs>
+
+        <!-- edges first, so the opaque node boxes sit on top of them -->
+        <g id="dag-edges">
+          <path class="dagedge" data-from="any-file" data-to="fastq"     d="M180,143 C215,143 215,43 250,43"/>
+          <path class="dagedge" data-from="any-file" data-to="vcf"       d="M180,143 C215,143 215,173 250,173"/>
+          <path class="dagedge" data-from="any-file" data-to="gff"       d="M180,143 C215,143 215,243 250,243"/>
+          <path class="dagedge" data-from="any-file" data-to="fasta"     d="M180,143 C300,143 380,108 490,108"/>
+          <path class="dagedge" data-from="fastq"    data-to="fasta"     d="M420,43 C450,43 460,108 490,108"/>
+          <path class="dagedge" data-from="fasta"    data-to="converted" d="M660,108 C695,108 700,38 730,38"/>
+          <path class="dagedge" data-from="fasta"    data-to="newfasta"  d="M660,108 C695,108 700,148 730,148"/>
+          <path class="dagedge" data-from="fasta"    data-to="report"    d="M660,108 C700,108 700,248 730,248"/>
+          <path class="dagedge" data-from="vcf"      data-to="newfasta"  d="M420,173 C550,173 600,148 730,148"/>
+          <path class="dagedge" data-from="gff"      data-to="newfasta"  d="M420,243 C550,243 600,148 730,148"/>
+          <path class="dagedge" data-from="one-seq"  data-to="protein"   d="M180,323 C400,323 550,333 730,333"/>
+          <path class="dagedge" data-from="one-seq"  data-to="report"    d="M180,323 C420,323 560,248 730,248"/>
+        </g>
+
+        <g class="daglabels">
+          <text class="daglabel" x="196" y="100">files/stats</text>
+          <text class="daglabel" x="432" y="72">fastq/to-fasta</text>
+          <text class="daglabel" x="666" y="72">conversions/convert</text>
+          <text class="daglabel" x="520" y="162">vcf-to-fasta</text>
+          <text class="daglabel" x="520" y="234">extract-gff</text>
+          <text class="daglabel" x="644" y="242">fasta/stats</text>
+          <text class="daglabel" x="330" y="316">sequences/translate</text>
+        </g>
+
+        <g class="dagnode" data-node="any-file" tabindex="0" role="button" aria-pressed="false">
+          <title>A file whose format you are not sure of</title>
+          <rect x="10" y="120" width="170" height="46" rx="3"/>
+          <text x="95" y="143" text-anchor="middle" dominant-baseline="central">Any file</text>
+        </g>
+        <g class="dagnode" data-node="one-seq" tabindex="0" role="button" aria-pressed="false">
+          <title>One sequence, pasted in as text</title>
+          <rect x="10" y="300" width="170" height="46" rx="3"/>
+          <text x="95" y="323" text-anchor="middle" dominant-baseline="central">One sequence</text>
+        </g>
+        <g class="dagnode" data-node="fastq" tabindex="0" role="button" aria-pressed="false">
+          <title>Sequencing reads with quality scores</title>
+          <rect x="250" y="20" width="170" height="46" rx="3"/>
+          <text x="335" y="43" text-anchor="middle" dominant-baseline="central">FASTQ</text>
+        </g>
+        <g class="dagnode" data-node="vcf" tabindex="0" role="button" aria-pressed="false">
+          <title>A list of variants against a reference</title>
+          <rect x="250" y="150" width="170" height="46" rx="3"/>
+          <text x="335" y="173" text-anchor="middle" dominant-baseline="central">VCF</text>
+        </g>
+        <g class="dagnode" data-node="gff" tabindex="0" role="button" aria-pressed="false">
+          <title>Feature coordinates along a sequence</title>
+          <rect x="250" y="220" width="170" height="46" rx="3"/>
+          <text x="335" y="243" text-anchor="middle" dominant-baseline="central">GFF / GTF</text>
+        </g>
+        <g class="dagnode" data-node="fasta" tabindex="0" role="button" aria-pressed="false">
+          <title>Named sequences, no quality scores</title>
+          <rect x="490" y="85" width="170" height="46" rx="3"/>
+          <text x="575" y="108" text-anchor="middle" dominant-baseline="central">FASTA</text>
+        </g>
+        <g class="dagnode" data-node="converted" tabindex="0" role="button" aria-pressed="false">
+          <title>The same sequences in another format</title>
+          <rect x="730" y="15" width="170" height="46" rx="3"/>
+          <text x="815" y="38" text-anchor="middle" dominant-baseline="central">Converted file</text>
+        </g>
+        <g class="dagnode" data-node="newfasta" tabindex="0" role="button" aria-pressed="false">
+          <title>A consensus sequence, or the genes cut out of one</title>
+          <rect x="730" y="125" width="170" height="46" rx="3"/>
+          <text x="815" y="148" text-anchor="middle" dominant-baseline="central">New FASTA</text>
+        </g>
+        <g class="dagnode" data-node="report" tabindex="0" role="button" aria-pressed="false">
+          <title>Numbers and summaries rather than sequence</title>
+          <rect x="730" y="225" width="170" height="46" rx="3"/>
+          <text x="815" y="248" text-anchor="middle" dominant-baseline="central">Numbers &amp; stats</text>
+        </g>
+        <g class="dagnode" data-node="protein" tabindex="0" role="button" aria-pressed="false">
+          <title>The protein a nucleotide sequence codes for</title>
+          <rect x="730" y="310" width="170" height="46" rx="3"/>
+          <text x="815" y="333" text-anchor="middle" dominant-baseline="central">Protein</text>
+        </g>
+      </svg>
+
+      <div class="dag-detail" id="dag-detail" aria-live="polite">
+        <p class="dag-hint">Select a box above to see the endpoints that take it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ glossary ============================ -->
+<section class="section" id="glossary">
+  <div class="wrap">
+    <p class="eyebrow">In plain English</p>
+    <h2>The words, explained</h2>
+    <p class="lede" style="margin-top:1rem">
+      Every term used on this site and in the reference, in one place. The left column is
+      the biology, the right column is the computing.
+    </p>
+
+    <dl class="gloss">
+      <div class="term">
+        <dt>FASTA</dt>
+        <dd>A plain text file holding one or more sequences. Each entry starts with a name
+        line beginning <code>&gt;</code>, followed by the letters of the sequence.</dd>
+      </div>
+      <div class="term">
+        <dt>API</dt>
+        <dd>A way for one program to ask another to do something, without a person clicking
+        through a screen. bioAPI is the second program.</dd>
+      </div>
+
+      <div class="term">
+        <dt>FASTQ</dt>
+        <dd>What a sequencing machine produces. Like FASTA, but every base also carries a
+        score saying how sure the machine was about it.</dd>
+      </div>
+      <div class="term">
+        <dt>Endpoint</dt>
+        <dd>One web address that does one specific job. <code>/api/v1/fasta/stats</code>
+        summarises a FASTA file and does nothing else.</dd>
+      </div>
+
+      <div class="term">
+        <dt>GenBank and EMBL</dt>
+        <dd>Richer text formats that carry annotations — where the genes are, what they are
+        called — alongside the sequence itself.</dd>
+      </div>
+      <div class="term">
+        <dt>Request and response</dt>
+        <dd>You send a request (your file and your options); the service sends back a
+        response (the answer). The same exchange your browser makes to load a page.</dd>
+      </div>
+
+      <div class="term">
+        <dt>VCF</dt>
+        <dd>A list of the positions where one sample differs from a reference genome, and
+        what it has instead.</dd>
+      </div>
+      <div class="term">
+        <dt>JSON</dt>
+        <dd>A plain text way of writing structured data that programs can read reliably.
+        Every answer bioAPI gives comes back in it.</dd>
+      </div>
+
+      <div class="term">
+        <dt>GFF and GTF</dt>
+        <dd>A list of features — genes, exons — and the start and end positions they occupy
+        along a sequence.</dd>
+      </div>
+      <div class="term">
+        <dt>Status code</dt>
+        <dd>A number in the response saying how it went. 200 means fine, 400 means your
+        input was rejected, 500 means the fault was ours.</dd>
+      </div>
+
+      <div class="term">
+        <dt>Reverse complement</dt>
+        <dd>DNA's two strands mirror each other — A pairs with T, G with C. Given one
+        strand, the reverse complement is the other one, read in the direction it is
+        normally written.</dd>
+      </div>
+      <div class="term">
+        <dt>Docker and containers</dt>
+        <dd>A sealed box holding the software and everything it depends on, so it behaves
+        the same on any machine. It is how bioAPI is run.</dd>
+      </div>
+
+      <div class="term">
+        <dt>GC content</dt>
+        <dd>The percentage of a sequence made up of G and C. It varies between organisms and
+        between regions, and it affects how a sequence behaves in the lab.</dd>
+      </div>
+      <div class="term">
+        <dt>curl</dt>
+        <dd>A small command-line program that sends a request and prints the response. It is
+        what the examples use, but any language can do the same.</dd>
+      </div>
+
+      <div class="term">
+        <dt>N50</dt>
+        <dd>A way of saying how long the pieces in an assembly are: half of all the sequence
+        sits in pieces at least this long. Higher usually means a better assembly.</dd>
+      </div>
+      <div class="term">
+        <dt>API key</dt>
+        <dd>An optional password sent with each request. bioAPI is open until you set one;
+        after that, requests without it are refused.</dd>
+      </div>
+
+      <div class="term">
+        <dt>Quality score, Q20, Q30</dt>
+        <dd>How confident the sequencer is about a base. Q20 means about one wrong call in a
+        hundred, Q30 about one in a thousand.</dd>
+      </div>
+      <div class="term">
+        <dt>Rate limit</dt>
+        <dd>A cap on how many requests one user can send in a given period, so that nobody
+        can overwhelm the service. The default is 120 a minute.</dd>
+      </div>
+
+      <div class="term">
+        <dt>Translation</dt>
+        <dd>Turning DNA or RNA into the protein it codes for, three letters at a time. Which
+        triplet means which amino acid depends on the organism, so the code can be chosen.</dd>
+      </div>
+      <div class="term">
+        <dt>Warning</dt>
+        <dd>A note attached to a successful answer — twelve records were skipped, a partial
+        triplet was dropped. The operation worked; something is still worth knowing.</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<!-- ============================ try it ============================ -->
+<section class="section" id="try-it">
+  <div class="wrap">
+    <p class="eyebrow">Try it</p>
+    <h2>Running in three steps</h2>
+    <p class="lede" style="margin-top:1rem">
+      Everything runs on your own machine, so your files stay on it. The only thing you need
+      installed first is Docker, which is a free download.
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <div>
+          <span class="num">STEP 1</span>
+          <h3>Start it</h3>
+          <p>
+            Paste these three lines into a terminal. The first download takes a few minutes;
+            after that it starts in seconds.
+          </p>
+        </div>
+        <div>
+<pre><span class="cmd">git</span> <span class="sub">clone</span> <span class="url">https://github.com/bhagesh-h/bioAPI.git</span>
 <span class="cmd">cd</span> bioAPI
-<span class="cmd">docker</span> <span class="sub">compose up</span> api
+<span class="cmd">docker</span> <span class="sub">compose up</span> api</pre>
+        </div>
+      </div>
 
-<span class="c"># interactive docs, generated from the code</span>
-<span class="cmd">open</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/docs</span></pre>
-        <p class="blocktitle" style="margin-top:1.75rem">call it</p>
-<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/\
-sequences/reverse-complement</span> \
+      <div class="step">
+        <div>
+          <span class="num">STEP 2</span>
+          <h3>Use it without writing code</h3>
+          <p>
+            Open this address in your browser. You get a page listing every operation: pick
+            one, fill in the boxes or upload a file, press Execute, read the answer.
+          </p>
+          <p>This is usually the right starting point if you are not a programmer.</p>
+        </div>
+        <div>
+<pre><span class="url">http://127.0.0.1:8000</span><span class="ep">/docs</span></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div>
+          <span class="num">STEP 3</span>
+          <h3>Or call it from a program</h3>
+          <p>
+            Every operation is also a plain web request, so any language can drive it. This
+            one asks for the opposite strand of a short sequence.
+          </p>
+        </div>
+        <div>
+<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/sequences/reverse-complement</span> \
   <span class="flg">-H</span> <span class="str">'Content-Type: application/json'</span> \
-  <span class="flg">-d</span> <span class="str">'{"sequence":"ATGCGTAA","alphabet":"dna"}'</span></pre>
-      </div>
-      <div>
-        <p class="blocktitle">what comes back</p>
-<pre>{
-  <span class="key">"success"</span>: <span class="lit">true</span>,
-  <span class="key">"message"</span>: <span class="lit">null</span>,
-  <span class="key">"data"</span>: { <span class="key">"result"</span>: <span class="str">"TTACGCAT"</span>, <span class="key">"length"</span>: <span class="lit">8</span> },
-  <span class="key">"error"</span>: <span class="lit">null</span>,
-  <span class="key">"warnings"</span>: [],
-  <span class="key">"request_id"</span>: <span class="str">"c20b1ca5-9c54-4297-8040-a944c809bc5b"</span>
-}</pre>
-        <p class="blocktitle" style="margin-top:1.75rem">everyday commands</p>
-<pre><span class="cmd">make</span> <span class="sub">up</span>       <span class="c"># serve on port 8000</span>
-<span class="cmd">make</span> <span class="sub">test</span>     <span class="c"># suite behind a 90% coverage gate</span>
-<span class="cmd">make</span> <span class="sub">lint</span>     <span class="c"># ruff + mypy --strict</span>
-<span class="cmd">make</span> <span class="sub">smoke</span>    <span class="c"># start, probe /health/ready, tear down</span>
-<span class="cmd">make</span> <span class="sub">shell</span>    <span class="c"># a shell in the dev image</span></pre>
+  <span class="flg">-d</span> <span class="str">'{"sequence":"ATGCGTAA"}'</span></pre>
+        </div>
       </div>
     </div>
+
+    <a class="next" href="reference.html">
+      <span class="t">API reference</span>
+      <span class="d">All 44 endpoints with their inputs, the response format, error codes and configuration.</span>
+      <span class="go">Read it →</span>
+    </a>
   </div>
 </section>
 
-<!-- ============================ features ============================ -->
-<section class="section" id="capabilities">
+<!-- ============================ roadmap ============================ -->
+<section class="section" id="roadmap">
   <div class="wrap">
-    <p class="eyebrow">Capabilities</p>
-    <h2>Core capabilities</h2>
-
-    <div class="feats">
-      <div class="feat">
-        <h3>One envelope, everywhere</h3>
-        <p>Every JSON endpoint returns the same six fields, so a client writes one
-        unwrapping helper and reuses it for all 37 versioned routes.</p>
-      </div>
-      <div class="feat">
-        <h3>Detection reads content, not extensions</h3>
-        <p>A FASTA file named <code>sample.txt</code> is still reported as FASTA, with a
-        confidence level and the reason behind the verdict.</p>
-      </div>
-      <div class="feat">
-        <h3>Warnings you should actually read</h3>
-        <p>An operation can succeed and still have something to tell you: 12 records
-        skipped, a VCF variant that did not match the reference, a partial codon dropped.</p>
-      </div>
-      <div class="feat">
-        <h3>The API describes itself</h3>
-        <p><code>GET /api/v1/formats</code> publishes the conversion matrix and the reason
-        each unavailable pair is unavailable, so clients need not hard-code it.</p>
-      </div>
-      <div class="feat">
-        <h3>Impossible work is refused up front</h3>
-        <p>Converting to FASTQ from a source without quality scores fails immediately with
-        an explanation, rather than deep inside Biopython after the upload is read.</p>
-      </div>
-      <div class="feat">
-        <h3>Safe defaults before you configure anything</h3>
-        <p>Optional API key, per-key rate limiting, upload caps enforced twice, security
-        headers on every response, and an unprivileged container user.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============================ endpoints ============================ -->
-<section class="section" id="api-reference">
-  <div class="wrap">
-    <p class="eyebrow">API reference · 44 endpoints</p>
-    <h2>Endpoint reference</h2>
+    <p class="eyebrow">Roadmap</p>
+    <h2>What is not here yet</h2>
     <p class="lede" style="margin-top:1rem">
-      Versioned routes live under <code>/api/v1</code>. Health and metadata sit at the root
-      so probes never move between versions. The live OpenAPI document at
-      <code>/api/v1/openapi.json</code> is always the authority.
+      Worth being straight about the gaps. These are candidates drawn from comparing bioAPI
+      against <a href="https://bioinf.shenwei.me/seqkit/">SeqKit</a>, the closest
+      command-line equivalent, and against what Biopython and pysam can already do inside
+      the container. <strong style="color:var(--ink);font-weight:500">None of it is
+      built.</strong> The full write-up, with draft routes, is in
+      <a href="https://github.com/bhagesh-h/bioAPI/blob/main/docs/roadmap.md">docs/roadmap.md</a>.
     </p>
 
-    <div class="filterbar">
-      <input id="filter" type="search" placeholder="Filter endpoints — try &quot;fastq&quot;, &quot;split&quot;, &quot;vcf&quot;  (press /)" aria-label="Filter endpoints">
-      <span id="count" aria-live="polite"></span>
-    </div>
-
-    <!-- ---- health ---- -->
-    <div class="group" data-group>
-      <div class="group-head">
-        <h3>Health and metadata</h3>
-        <span class="n" data-n>7</span>
-      </div>
-      <p class="group-note">
-        Never require an API key and are exempt from rate limiting, so an orchestrator's
-        probes cannot be locked out.
-      </p>
-      <div class="tablewrap">
-      <table>
-        <thead><tr><th style="width:34%">Endpoint</th><th>What it does</th><th style="width:26%">Returns</th></tr></thead>
-        <tbody>
-          <tr data-ep><td class="p"><span class="m">GET</span><code>/</code></td><td>Service name, version and links to the documentation.</td><td class="f"><code>ServiceInfo</code></td></tr>
-          <tr data-ep><td class="p"><span class="m">GET</span><code>/health</code></td><td>Liveness — 200 for as long as the process is serving.</td><td class="f"><code>LivenessStatus</code></td></tr>
-          <tr data-ep><td class="p"><span class="m">GET</span><code>/health/live</code></td><td>Liveness, under its explicit name.</td><td class="f"><code>LivenessStatus</code></td></tr>
-          <tr data-ep><td class="p"><span class="m">GET</span><code>/health/ready</code></td><td>Readiness — parses a probe record with Biopython and loads pysam's compiled extension. 503 if either fails, so a broken image leaves the load balancer instead of failing real requests.</td><td class="f"><code>ReadinessStatus</code>, 503 on failure</td></tr>
-          <tr data-ep><td class="p"><span class="m">GET</span><code>/ready</code> <span class="dep">alias</span></td><td>Deprecated alias of <code>/health/ready</code>.</td><td class="f"><code>ReadinessStatus</code></td></tr>
-          <tr data-ep><td class="p"><span class="m">GET</span><code>/version</code></td><td>App, Python, Biopython and pysam versions.</td><td class="f"><code>VersionInfo</code></td></tr>
-          <tr data-ep><td class="p"><span class="m">GET</span><code>/metrics</code></td><td>Prometheus metrics. Health paths are excluded from the histograms.</td><td class="f">Prometheus text</td></tr>
-        </tbody>
-      </table>
-      </div>
-    </div>
-
-    <!-- ---- sequences ---- -->
-    <div class="group" data-group>
-      <div class="group-head">
-        <h3>Sequences</h3>
-        <span class="path">/api/v1/sequences</span>
-        <span class="n" data-n>11</span>
-      </div>
-      <p class="group-note">
-        All eleven share a JSON body: <code>sequence</code>, optional <code>alphabet</code>
-        (<code>dna</code>, <code>rna</code>, <code>protein</code>, or omitted to auto-detect),
-        <code>uppercase</code> and <code>remove_whitespace</code>. Whitespace is stripped
-        before processing, so a wrapped sequence pastes in fine. IUPAC ambiguity codes are
-        valid but produce a warning, because most calculations treat the code literally
-        rather than expanding it. Nucleotide-only operations reject a sequence declared as
-        <code>protein</code>.
-      </p>
-      <div class="tablewrap">
-      <table>
-        <thead><tr><th style="width:34%">Endpoint</th><th>What it does</th><th style="width:26%">Extra fields</th></tr></thead>
-        <tbody>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/reverse</code></td><td>Reverse the sequence.</td><td class="f">—</td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/complement</code></td><td>Complement each base. RNA input stays RNA.</td><td class="f">—</td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/reverse-complement</code></td><td>The opposite strand, read 5'→3'.</td><td class="f">—</td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/transcribe</code></td><td>DNA → RNA.</td><td class="f">—</td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/back-transcribe</code></td><td>RNA → DNA.</td><td class="f">—</td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/translate</code></td><td>Nucleotide → protein under any NCBI genetic code. Truncates to the last whole codon and says so in <code>warnings</code>; shorter than one codon is a 400.</td><td class="f"><code>table</code> (default 1), <code>to_stop</code> (default false)</td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/gc-content</code></td><td>GC percentage, with G/C and A/T counts.</td><td class="f">—</td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/count-bases</code></td><td>Residue frequencies, most common first.</td><td class="f">—</td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/kmer</code></td><td>K-mer counts, optionally only the most frequent.</td><td class="f"><code>k</code> (1–32, default 3), <code>top</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/find-motif</code></td><td>Motif positions as 0-based half-open coordinates — <code>{"start":0,"end":2}</code> is the first two characters.</td><td class="f"><code>motif</code> (required), <code>allow_overlaps</code> (default true)</td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/validate</code></td><td>Report validity without rejecting. Always 200, with <code>is_valid</code> and the offending characters listed — use it before committing to an operation.</td><td class="f">—</td></tr>
-        </tbody>
-      </table>
-      </div>
-    </div>
-
-    <!-- ---- fasta ---- -->
-    <div class="group" data-group>
-      <div class="group-head">
-        <h3>FASTA utilities</h3>
-        <span class="path">/api/v1/fasta</span>
-        <span class="n" data-n>14</span>
-      </div>
-      <p class="group-note">
-        Every request carries <code>fasta_string</code> and an optional
-        <code>line_width</code> (default 60; <code>0</code> puts each sequence on one line).
-        Multi-line sequences are joined on parse and re-wrapped on output, and blank lines
-        between records are tolerated.
-      </p>
-      <div class="tablewrap">
-      <table>
-        <thead><tr><th style="width:34%">Endpoint</th><th>What it does</th><th style="width:26%">Extra fields</th></tr></thead>
-        <tbody>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/stats</code></td><td>Count, min, max, mean length, N50, GC, and a per-sequence breakdown.</td><td class="f">—</td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/shorten-headers</code></td><td>Truncate headers, warning when the truncation collides.</td><td class="f"><code>n</code> — characters to keep</td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/get-n-sequences</code></td><td>The first N records.</td><td class="f"><code>n</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/filter-by-length</code></td><td>Keep records inside a length range.</td><td class="f"><code>min_length</code>, <code>max_length</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/extract-subsequence</code></td><td>Slice a 1-based inclusive range from each record. Fails the whole request if any sequence is shorter than <code>end</code>, naming it in <code>error.details</code>.</td><td class="f"><code>start</code>, <code>end</code>, <code>skip_short</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/sample-sequences</code></td><td>A random sample. Without a seed it is genuinely random and differs between calls.</td><td class="f"><code>n</code>, <code>seed</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/split</code></td><td>Into <code>n</code> chunks or chunks of <code>size</code> — one or the other, never both.</td><td class="f"><code>n</code> <em>or</em> <code>size</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/merge</code></td><td>Concatenate documents. Duplicate ids are a warning; deduplication suffixes them <code>_2</code>, <code>_3</code> in order of appearance.</td><td class="f"><code>fasta_strings</code> (≥2), <code>deduplicate_ids</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/convert-case</code></td><td>Upper- or lower-case the sequences, leaving headers alone.</td><td class="f"><code>case</code>: <code>upper</code> | <code>lower</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/remove-unknown-chars</code></td><td>Strip anything outside ACGT, optionally keeping IUPAC codes.</td><td class="f"><code>keep_ambiguity_codes</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/rename-sequences</code></td><td>Apply an <code>{old_id: new_id}</code> map. Keys matching no record are warned about — usually a typo.</td><td class="f"><code>rename_map</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/modify-descriptions</code></td><td>Apply an <code>{id: description}</code> map, with the same warning on unmatched keys.</td><td class="f"><code>description_map</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/find-unique</code></td><td>Deduplicate by sequence content rather than by identifier.</td><td class="f">—</td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/extract-ids</code></td><td>List every identifier in the document.</td><td class="f">—</td></tr>
-        </tbody>
-      </table>
-      </div>
-    </div>
-
-    <!-- ---- fastq ---- -->
-    <div class="group" data-group>
-      <div class="group-head">
-        <h3>FASTQ utilities</h3>
-        <span class="path">/api/v1/fastq</span>
-        <span class="n" data-n>5</span>
-      </div>
-      <p class="group-note">
-        Every request carries <code>fastq_string</code> and <code>quality_offset</code>
-        (33 for Sanger and Illumina 1.8+, 64 for older Illumina). Parsing is strict: exactly
-        four lines per read, <code>@</code> first, <code>+</code> third, sequence and quality
-        of equal non-zero length. Errors name the read number. Line-wrapped FASTQ cannot be
-        parsed unambiguously and is rejected rather than guessed at.
-      </p>
-      <div class="tablewrap">
-      <table>
-        <thead><tr><th style="width:34%">Endpoint</th><th>What it does</th><th style="width:26%">Extra fields</th></tr></thead>
-        <tbody>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/stats</code></td><td>Read count, lengths, GC, mean quality, and Q20/Q30 percentages. A quality string that decodes below zero produces a warning suggesting the other encoding.</td><td class="f">—</td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/quality-filter</code></td><td>Keep reads above a mean Phred score and a minimum length.</td><td class="f"><code>min_quality</code> (default 20), <code>min_length</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/to-fasta</code></td><td>Drop the quality track.</td><td class="f"><code>line_width</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/compress-gz</code></td><td>Gzip the document, returned as <code>data_base64</code> so the bytes survive JSON. Base64 adds a third to the size — for large files use the upload endpoints.</td><td class="f">—</td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/decompress-gz</code></td><td>The reverse, validating that the result really is FASTQ.</td><td class="f"><code>fastq_gz_base64</code></td></tr>
-        </tbody>
-      </table>
-      </div>
-    </div>
-
-    <!-- ---- files ---- -->
-    <div class="group" data-group>
-      <div class="group-head">
-        <h3>Files</h3>
-        <span class="path">/api/v1/files</span>
-        <span class="n" data-n>4</span>
-      </div>
-      <p class="group-note">
-        Multipart uploads. Recognised for analysis: FASTA, FASTQ, GenBank, EMBL, SAM, BAM,
-        VCF, GFF, GTF and plain text.
-      </p>
-      <div class="tablewrap">
-      <table>
-        <thead><tr><th style="width:34%">Endpoint</th><th>What it does</th><th style="width:26%">Form fields</th></tr></thead>
-        <tbody>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/stats</code></td><td>Analyse an upload. The format comes from the first 64 KB of content combined with the filename, reported with a confidence of <code>high</code>, <code>medium</code> (content and extension disagree — content wins) or <code>low</code>. Which statistics block is filled depends on the format: <code>sequence_stats</code>, <code>quality_stats</code>, <code>bam_stats</code>, <code>gff_stats</code>, <code>vcf_stats</code>, or a line count.</td><td class="f"><code>file</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/summary</code> <span class="dep">alias</span></td><td>Deprecated alias of <code>/stats</code>.</td><td class="f"><code>file</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/extract-gff</code></td><td>Slice FASTA features using GFF/GTF coordinates, 1-based inclusive as GFF specifies. Minus-strand features are reverse-complemented. Unknown sequence names, non-numeric coordinates and out-of-range features are skipped and explained; matching nothing at all is a 422. Returns FASTA as <code>text/plain</code>.</td><td class="f"><code>fasta_file</code>, <code>gff_file</code>, <code>feature_type</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/vcf/extract</code></td><td>List variants of one class. Any ALT of a different length to REF is an INDEL; equal lengths with a single-base REF is a SNP; equal lengths with a longer REF is an MNP; no usable ALT (<code>*</code>, <code>.</code>, <code>&lt;NON_REF&gt;</code>) is OTHER. Reports both <code>count</code> and <code>total_in_file</code>.</td><td class="f"><code>vcf_file</code>, <code>variant_type</code>: <code>ALL</code> | <code>SNP</code> | <code>INDEL</code> | <code>MNP</code> | <code>OTHER</code></td></tr>
-        </tbody>
-      </table>
-      </div>
-    </div>
-
-    <!-- ---- conversions ---- -->
-    <div class="group" data-group>
-      <div class="group-head">
-        <h3>Conversions</h3>
-        <span class="path">/api/v1/conversions</span>
-        <span class="n" data-n>2</span>
-      </div>
-      <p class="group-note">
-        Both return a file directly, with the metadata in <code>X-</code> response headers
-        rather than a JSON body.
-      </p>
-      <div class="tablewrap">
-      <table>
-        <thead><tr><th style="width:34%">Endpoint</th><th>What it does</th><th style="width:26%">Parameters</th></tr></thead>
-        <tbody>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/convert</code></td><td>Convert between formats. The pair is checked before the upload is read, so an unsupported one costs no I/O and comes back with the list of targets that would work. GenBank and EMBL need a <code>molecule_type</code>; when the source lacks one it is inferred and reported as a warning. Converting from FASTQ drops the quality scores, also as a warning.</td><td class="f">query <code>source_format</code>, <code>target_format</code>; multipart <code>file</code></td></tr>
-          <tr data-ep><td class="p"><span class="m post">POST</span><code>/vcf-to-fasta</code></td><td>Apply a VCF to a reference to build a consensus. The first ALT of each record is used, applied from the end of each sequence backwards so an indel cannot shift the coordinates of the variants still pending. A variant is skipped when its chromosome is absent, its position is out of range, or its REF does not match the reference — usually a different reference build. References with no variants pass through unchanged, so the record count always matches the input.</td><td class="f"><code>reference_fasta</code>, <code>vcf_file</code></td></tr>
-        </tbody>
-      </table>
-      </div>
-    </div>
-
-    <!-- ---- formats ---- -->
-    <div class="group" data-group>
-      <div class="group-head">
-        <h3>Formats</h3>
-        <span class="path">/api/v1/formats</span>
-        <span class="n" data-n>1</span>
-      </div>
-      <div class="tablewrap">
-      <table>
-        <thead><tr><th style="width:34%">Endpoint</th><th>What it does</th><th style="width:26%">Returns</th></tr></thead>
-        <tbody>
-          <tr data-ep><td class="p"><span class="m">GET</span><code>/api/v1/formats</code></td><td>Which formats this deployment can analyse, which conversions are available, and why the remaining pairs are not.</td><td class="f"><code>FormatCapabilities</code></td></tr>
-        </tbody>
-      </table>
-      </div>
-      <p class="group-note" style="margin-top:1.25rem">
-        The matrix it publishes: <code>fasta</code> → genbank, embl, tab, json ·
-        <code>fastq</code> → fasta, genbank, embl, tab, json ·
-        <code>genbank</code> → fasta, embl, tab, json ·
-        <code>embl</code> → fasta, genbank, tab, json ·
-        <code>tab</code> → fasta, genbank, embl, json ·
-        <code>text</code> → fasta, json. Anything targeting FASTQ from a source without
-        quality scores is refused with an explanation.
-      </p>
-    </div>
-  </div>
-</section>
-
-<!-- ============================ reference ============================ -->
-<section class="section" id="specification">
-  <div class="wrap">
-    <p class="eyebrow">Specification</p>
-    <h2>Conventions and configuration</h2>
-
-    <div class="subsec">
-      <h3>Response envelope</h3>
-      <p>Every JSON endpoint returns the same six fields, whether the call succeeded or not.</p>
-      <div class="cols" style="margin-top:1.25rem">
+    <div class="tasks">
+      <div class="task">
         <div>
-          <p class="blocktitle">on success</p>
-<pre>{
-  <span class="key">"success"</span>: <span class="lit">true</span>,
-  <span class="key">"message"</span>: <span class="lit">null</span>,
-  <span class="key">"data"</span>: { },
-  <span class="key">"error"</span>: <span class="lit">null</span>,
-  <span class="key">"warnings"</span>: [],
-  <span class="key">"request_id"</span>: <span class="str">"0f7c0a6e-2c5b-4a8e-9d0f-6f7a1b2c3d4e"</span>
-}</pre>
+          <h3>Primer and protein questions</h3>
+          <span class="n">Nothing new to install</span>
         </div>
         <div>
-          <p class="blocktitle">on failure — data is null, error is populated</p>
-<pre>{
-  <span class="key">"success"</span>: <span class="lit">false</span>,
-  <span class="key">"message"</span>: <span class="str">"Sequence contains characters outside dna: Z"</span>,
-  <span class="key">"data"</span>: <span class="lit">null</span>,
-  <span class="key">"error"</span>: {
-    <span class="key">"code"</span>: <span class="str">"INVALID_SEQUENCE"</span>,
-    <span class="key">"message"</span>: <span class="str">"Sequence contains characters outside dna: Z"</span>,
-    <span class="key">"details"</span>: {
-      <span class="key">"invalid_characters"</span>: [<span class="str">"Z"</span>],
-      <span class="key">"expected_alphabet"</span>: <span class="str">"dna"</span>
-    }
-  },
-  <span class="key">"warnings"</span>: [],
-  <span class="key">"request_id"</span>: <span class="str">"0f7c0a6e-2c5b-4a8e-9d0f-6f7a1b2c3d4e"</span>
-}</pre>
+          <p>
+            The biggest hole. bioAPI ships Biopython but only uses a corner of it, so these
+            are a service function and a route away rather than a new dependency.
+          </p>
+          <p class="eg">
+            Melting temperature for a primer · molecular weight · isoelectric point and the
+            other protein properties · open reading frames across all six frames ·
+            restriction cut sites · codon usage · pairwise alignment.
+          </p>
         </div>
       </div>
-    </div>
 
-    <div class="subsec">
-      <h3>Error codes</h3>
-      <p>Stable identifiers, meant for branching in client code rather than for display.</p>
-      <div class="codes">
-        <code>VALIDATION_ERROR</code><code>INVALID_SEQUENCE</code><code>INVALID_FASTA</code>
-        <code>INVALID_FASTQ</code><code>PARSE_ERROR</code><code>UNSUPPORTED_FORMAT</code>
-        <code>UNSUPPORTED_CONVERSION</code><code>PAYLOAD_TOO_LARGE</code><code>NOT_FOUND</code>
-        <code>UNAUTHORIZED</code><code>FORBIDDEN</code><code>RATE_LIMITED</code><code>INTERNAL_ERROR</code>
-      </div>
-    </div>
-
-    <div class="subsec">
-      <h3>Status codes</h3>
-      <div class="tablewrap">
-      <table>
-        <thead><tr><th style="width:10%">Code</th><th>Meaning</th></tr></thead>
-        <tbody>
-          <tr><td class="p"><code>200</code></td><td>Success.</td></tr>
-          <tr><td class="p"><code>400</code></td><td>Understood but rejected — a bad sequence, an impossible conversion.</td></tr>
-          <tr><td class="p"><code>401</code></td><td><code>X-API-Key</code> missing while a key is configured.</td></tr>
-          <tr><td class="p"><code>403</code></td><td><code>X-API-Key</code> present but wrong.</td></tr>
-          <tr><td class="p"><code>413</code></td><td>Payload above <code>MAX_UPLOAD_SIZE_MB</code>.</td></tr>
-          <tr><td class="p"><code>422</code></td><td>Schema validation failed, or a document could not be parsed.</td></tr>
-          <tr><td class="p"><code>429</code></td><td>Rate limit exceeded.</td></tr>
-          <tr><td class="p"><code>500</code></td><td>Unhandled error. Details are logged, not returned.</td></tr>
-          <tr><td class="p"><code>503</code></td><td><code>/health/ready</code> only — a dependency is unusable.</td></tr>
-        </tbody>
-      </table>
-      </div>
-    </div>
-
-    <div class="subsec">
-      <h3>Response headers</h3>
-      <div class="tablewrap">
-      <table>
-        <thead><tr><th style="width:42%">Header</th><th>On</th></tr></thead>
-        <tbody>
-          <tr><td class="p"><code>X-Request-ID</code></td><td>Everything. Echoes an inbound value if you send one.</td></tr>
-          <tr><td class="p"><code>X-Process-Time</code></td><td>Everything, in milliseconds.</td></tr>
-          <tr><td class="p"><code>X-RateLimit-Limit</code>, <code>-Remaining</code>, <code>-Reset</code></td><td>Everything outside the exempt paths.</td></tr>
-          <tr><td class="p"><code>Retry-After</code></td><td>429 responses.</td></tr>
-          <tr><td class="p"><code>X-Records-Converted</code></td><td><code>/conversions/convert</code>, <code>/conversions/vcf-to-fasta</code></td></tr>
-          <tr><td class="p"><code>X-Conversion-Source</code>, <code>-Target</code>, <code>-Warnings</code></td><td><code>/conversions/convert</code></td></tr>
-          <tr><td class="p"><code>X-Variants-Applied</code>, <code>X-Variants-Skipped</code></td><td><code>/conversions/vcf-to-fasta</code></td></tr>
-          <tr><td class="p"><code>X-Features-Extracted</code>, <code>X-Features-Skipped</code></td><td><code>/files/extract-gff</code></td></tr>
-        </tbody>
-      </table>
-      </div>
-    </div>
-
-    <div class="subsec">
-      <h3>Authentication and rate limiting</h3>
-      <p>
-        An unset <code>API_KEY</code> leaves the API open. Once it is set, every
-        <code>/api/v1</code> route needs the <code>X-API-Key</code> header — missing is a 401,
-        wrong is a 403, compared in constant time. The scheme is declared in the OpenAPI
-        document, so Swagger UI renders an <em>Authorize</em> button rather than a stray
-        header field on every operation.
-      </p>
-      <p>
-        Rate limiting is a fixed window keyed on the API key when present, otherwise on
-        <code>X-Forwarded-For</code> or the peer address. The counter is per process: behind
-        several replicas each enforces its own share, so put a global limit on the ingress if
-        you need one. Exempt: <code>/health</code>, <code>/health/live</code>,
-        <code>/health/ready</code>, <code>/ready</code>, <code>/metrics</code>.
-      </p>
-    </div>
-
-    <div class="subsec">
-      <h3>Configuration</h3>
-      <p>
-        Every setting has a working default, so the container starts with no <code>.env</code>
-        at all. These are the ones that matter in production.
-      </p>
-      <div class="tablewrap">
-      <table>
-        <thead><tr><th style="width:26%">Variable</th><th style="width:18%">Default</th><th>Notes</th></tr></thead>
-        <tbody>
-          <tr><td class="p"><code>ENVIRONMENT</code></td><td class="f"><code>development</code></td><td><code>production</code> suppresses internal error detail.</td></tr>
-          <tr><td class="p"><code>API_KEY</code></td><td class="f">unset</td><td>When set, every <code>/api/v1</code> route needs <code>X-API-Key</code>.</td></tr>
-          <tr><td class="p"><code>BACKEND_CORS_ORIGINS</code></td><td class="f"><code>*</code></td><td>Comma-separated or a JSON array. Narrow this.</td></tr>
-          <tr><td class="p"><code>MAX_UPLOAD_SIZE_MB</code></td><td class="f"><code>50</code></td><td>Checked against <code>Content-Length</code> and again while the body streams to disk, so a client that omits the header cannot fill the disk.</td></tr>
-          <tr><td class="p"><code>RATE_LIMIT_DEFAULT</code></td><td class="f"><code>120/minute</code></td><td><code>count/second|minute|hour|day</code></td></tr>
-          <tr><td class="p"><code>LOG_FORMAT</code></td><td class="f"><code>json</code></td><td><code>console</code> for readable local output.</td></tr>
-          <tr><td class="p"><code>DOCS_ENABLED</code></td><td class="f"><code>true</code></td><td><code>false</code> hides <code>/docs</code>, <code>/redoc</code> and the schema.</td></tr>
-        </tbody>
-      </table>
-      </div>
-    </div>
-
-    <div class="subsec">
-      <h3>Worked examples</h3>
-      <div class="cols" style="margin-top:1.25rem">
+      <div class="task">
         <div>
-          <p class="blocktitle">analyse a file</p>
-<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/files/stats</span> \
-  <span class="flg">-F</span> <span class="str">"file=@reads.fastq"</span></pre>
-          <p class="blocktitle" style="margin-top:1.75rem">convert fasta to genbank</p>
-<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> "<span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/conversions\
-/convert</span><span class="str">?source_format=fasta&amp;target_format=genbank</span>" \
-  <span class="flg">-F</span> <span class="str">"file=@genome.fasta"</span> <span class="flg">-o</span> genome.gb</pre>
+          <h3>Operations on a whole file</h3>
+          <span class="n">Single sequences only today</span>
         </div>
         <div>
-          <p class="blocktitle">build a consensus from a vcf</p>
-<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/conversions\
-/vcf-to-fasta</span> \
-  <span class="flg">-F</span> <span class="str">"reference_fasta=@ref.fasta"</span> \
-  <span class="flg">-F</span> <span class="str">"vcf_file=@variants.vcf"</span> <span class="flg">-o</span> consensus.fasta</pre>
-          <p class="blocktitle" style="margin-top:1.75rem">reproducible sampling</p>
-<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/fasta\
-/sample-sequences</span> \
-  <span class="flg">-H</span> <span class="str">'Content-Type: application/json'</span> \
-  <span class="flg">-d</span> <span class="str">'{"fasta_string":"&gt;a\nACGT\n&gt;b\nTTGG","n":1,"seed":42}'</span></pre>
+          <p>
+            Several operations exist for one pasted sequence but not for a file full of
+            them, which is usually the case you actually have.
+          </p>
+          <p class="eg">
+            Find a motif across every record · translate a whole FASTA file · sort by length
+            or name · cut into sliding windows · rename with a pattern instead of a
+            hand-written map · records common to several files.
+          </p>
+        </div>
+      </div>
+
+      <div class="task">
+        <div>
+          <h3>Sequencing reality</h3>
+          <span class="n">The clearest gap</span>
+        </div>
+        <div>
+          <p>
+            Reads arrive as a pair of files and usually arrive compressed. Every operation
+            today treats a file as standalone and uncompressed.
+          </p>
+          <p class="eg">
+            Paired-end R1/R2 handling, so filtering keeps mates together · converting
+            quality encodings between Sanger, Solexa and Illumina · accepting a gzipped
+            upload anywhere, not only on the two FASTQ endpoints · reading BED regions
+            alongside GFF.
+          </p>
+        </div>
+      </div>
+
+      <div class="task">
+        <div>
+          <h3>Bigger inputs</h3>
+          <span class="n">Currently capped at 50 MB</span>
+        </div>
+        <div>
+          <p>
+            Everything is synchronous: you wait on the request until the answer comes back.
+            That does not survive genome-scale files or an impatient proxy.
+          </p>
+          <p class="eg">
+            A submit-and-poll job model, as EMBL-EBI's Job Dispatcher uses · batching many
+            sequences into one call · streaming a conversion as it is produced · paging
+            through per-record results.
+          </p>
         </div>
       </div>
     </div>
@@ -813,8 +628,8 @@ sequences/reverse-complement</span> \
 <footer>
   <div class="wrap">
     <p>bioAPI v0.0.1 — GPL-3.0</p>
+    <a href="reference.html">API reference</a>
     <a href="https://github.com/bhagesh-h/bioAPI">Repository</a>
-    <a href="https://github.com/bhagesh-h/bioAPI/blob/main/docs/api-reference.md">API reference</a>
     <a href="https://github.com/bhagesh-h/bioAPI/blob/main/docs/architecture.md">Architecture</a>
     <a href="https://github.com/bhagesh-h/bioAPI/blob/main/docs/deployment.md">Deployment</a>
     <a href="https://github.com/bhagesh-h/bioAPI/blob/main/CHANGELOG.md">Changelog</a>
@@ -873,47 +688,152 @@ sequences/reverse-complement</span> \
     document.getElementById("strand").classList.add("go");
   });
 
-  /* ---- endpoint filter ---- */
-  var input = document.getElementById("filter");
-  var count = document.getElementById("count");
-  var groups = [].slice.call(document.querySelectorAll("[data-group]"));
-  var rows = [].slice.call(document.querySelectorAll("[data-ep]"));
+  /* ---- interoperability graph ---- */
+  var GRAPH = {
+    "any-file": {
+      title: "Any file",
+      blurb: "You have a file and are not certain what it is. The format is worked out from the first 64 KB of content combined with the filename, so a FASTA file saved as .txt is still recognised.",
+      ops: [
+        ["POST", "/api/v1/files/stats", "Identify the format and summarise what is inside, with a confidence level and the reason for the verdict."]
+      ]
+    },
+    "one-seq": {
+      title: "One sequence",
+      blurb: "A single stretch of DNA, RNA or protein pasted in as text. Whitespace and line breaks are stripped first, so a wrapped sequence works as-is.",
+      ops: [
+        ["POST", "/api/v1/sequences/reverse-complement", "The opposite strand, read 5'→3'."],
+        ["POST", "/api/v1/sequences/translate", "Turn nucleotides into the protein they code for, under any NCBI genetic code."],
+        ["POST", "/api/v1/sequences/gc-content", "The percentage made up of G and C, with the counts behind it."],
+        ["POST", "/api/v1/sequences/find-motif", "Every position where a short pattern occurs."],
+        ["POST", "/api/v1/sequences/kmer", "Counts of every chunk of length k."],
+        ["POST", "/api/v1/sequences/validate", "Check the sequence without rejecting it — always answers, even for invalid input."]
+      ],
+      more: "and 5 more: reverse, complement, transcribe, back-transcribe, count-bases"
+    },
+    "fastq": {
+      title: "FASTQ — reads with quality scores",
+      blurb: "What a sequencing machine produces. Parsing is strict: four lines per read, and sequence and quality of equal length.",
+      ops: [
+        ["POST", "/api/v1/fastq/stats", "Read counts, lengths, GC, mean quality and the Q20/Q30 percentages."],
+        ["POST", "/api/v1/fastq/quality-filter", "Discard reads below a mean Phred score or a minimum length."],
+        ["POST", "/api/v1/fastq/to-fasta", "Drop the quality track to get a plain FASTA file."],
+        ["POST", "/api/v1/fastq/compress-gz", "Gzip the document, returned base64-encoded."],
+        ["POST", "/api/v1/fastq/decompress-gz", "The reverse, validating that the result really is FASTQ."]
+      ]
+    },
+    "fasta": {
+      title: "FASTA — named sequences",
+      blurb: "The hub of the whole graph. Most files end up here, and most of the reshaping operations live here.",
+      ops: [
+        ["POST", "/api/v1/fasta/stats", "Count, lengths, N50, GC and a per-sequence breakdown."],
+        ["POST", "/api/v1/fasta/filter-by-length", "Keep only records inside a length range."],
+        ["POST", "/api/v1/fasta/sample-sequences", "A random sample, reproducible when you pass a seed."],
+        ["POST", "/api/v1/fasta/split", "Into n chunks, or chunks of a given size."],
+        ["POST", "/api/v1/fasta/merge", "Concatenate documents, optionally deduplicating identifiers."],
+        ["POST", "/api/v1/fasta/find-unique", "Remove duplicates by sequence content rather than by name."]
+      ],
+      more: "and 8 more: shorten-headers, get-n-sequences, extract-subsequence, convert-case, remove-unknown-chars, rename-sequences, modify-descriptions, extract-ids"
+    },
+    "vcf": {
+      title: "VCF — variants against a reference",
+      blurb: "The positions where a sample differs from a reference genome, and what it carries instead.",
+      ops: [
+        ["POST", "/api/v1/files/vcf/extract", "List the variants of one class — SNP, INDEL, MNP, OTHER or all of them."],
+        ["POST", "/api/v1/conversions/vcf-to-fasta", "Apply the variants to a reference to build that sample's own sequence."]
+      ]
+    },
+    "gff": {
+      title: "GFF / GTF — feature coordinates",
+      blurb: "Where the genes and other features sit along a sequence. On its own it carries no sequence, so it is always used alongside a FASTA file.",
+      ops: [
+        ["POST", "/api/v1/files/extract-gff", "Cut the named features out of a FASTA file. Minus-strand features come back reverse-complemented."]
+      ]
+    },
+    "converted": {
+      title: "Converted file",
+      blurb: "The same sequences written in a different format, because the tool you want to use next rarely reads the one you have.",
+      ops: [
+        ["POST", "/api/v1/conversions/convert", "Convert between FASTA, FASTQ, GenBank, EMBL, tab-separated and JSON."],
+        ["GET", "/api/v1/formats", "Ask which conversions are possible, and why the remaining pairs are not."]
+      ]
+    },
+    "newfasta": {
+      title: "New FASTA",
+      blurb: "A FASTA file that did not exist before: a consensus sequence built from variants, or the genes cut out of a genome. Both feed straight back into every FASTA operation.",
+      ops: [
+        ["POST", "/api/v1/conversions/vcf-to-fasta", "A reference plus a VCF becomes the sample's own sequence."],
+        ["POST", "/api/v1/files/extract-gff", "A genome plus an annotation becomes one record per feature."]
+      ]
+    },
+    "report": {
+      title: "Numbers & stats",
+      blurb: "Where a chain usually ends: an answer rather than another file. Every one of these comes back in the same JSON envelope.",
+      ops: [
+        ["POST", "/api/v1/files/stats", "Whatever is measurable about an uploaded file of any supported format."],
+        ["POST", "/api/v1/fasta/stats", "Lengths, N50 and GC for a FASTA file."],
+        ["POST", "/api/v1/fastq/stats", "Quality distribution for a set of reads."],
+        ["POST", "/api/v1/sequences/gc-content", "GC percentage for a single sequence."]
+      ]
+    },
+    "protein": {
+      title: "Protein",
+      blurb: "The amino acid sequence a nucleotide sequence codes for. Once translated it is still a sequence, so the protein-safe operations all still apply to it.",
+      ops: [
+        ["POST", "/api/v1/sequences/translate", "Nucleotides in, protein out. Partial trailing codons are dropped with a warning."],
+        ["POST", "/api/v1/sequences/count-bases", "Residue frequencies, most common first."],
+        ["POST", "/api/v1/sequences/find-motif", "Locate a short motif inside the protein."]
+      ]
+    }
+  };
 
-  rows.forEach(function (r) {
-    r.dataset.hay = r.textContent.toLowerCase().replace(/\s+/g, " ");
-  });
+  var detail = document.getElementById("dag-detail");
+  var nodes = [].slice.call(document.querySelectorAll(".dagnode"));
+  var edges = [].slice.call(document.querySelectorAll(".dagedge"));
 
-  function apply() {
-    var q = input.value.trim().toLowerCase();
-    var shown = 0;
-    rows.forEach(function (r) {
-      var hit = !q || r.dataset.hay.indexOf(q) !== -1;
-      r.hidden = !hit;
-      if (hit) shown++;
-    });
-    groups.forEach(function (g) {
-      var live = g.querySelectorAll("[data-ep]:not([hidden])").length;
-      g.hidden = live === 0;
-      var n = g.querySelector("[data-n]");
-      if (n) n.textContent = live;
-    });
-    count.textContent = q
-      ? shown + " of " + rows.length + " endpoints"
-      : rows.length + " endpoints";
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
-  input.addEventListener("input", apply);
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "/" && document.activeElement !== input) {
-      e.preventDefault();
-      input.focus();
+  function select(id) {
+    var info = GRAPH[id];
+    if (!info) return;
+
+    nodes.forEach(function (n) {
+      var on = n.dataset.node === id;
+      n.classList.toggle("on", on);
+      n.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    edges.forEach(function (e) {
+      e.classList.toggle("on", e.dataset.from === id || e.dataset.to === id);
+    });
+
+    var html = "<h3>" + esc(info.title) + "</h3>";
+    html += '<p class="blurb">' + esc(info.blurb) + "</p>";
+    html += '<ul class="dag-ops">';
+    info.ops.forEach(function (op) {
+      html += "<li><span class=\"route\"><span class=\"verb\">" + esc(op[0]) + "</span>" +
+              esc(op[1]) + '</span><span class="what">' + esc(op[2]) + "</span></li>";
+    });
+    html += "</ul>";
+    if (info.more) {
+      html += '<p class="dag-hint" style="margin-top:0.9rem">' + esc(info.more) +
+              ' — see the <a href="reference.html">API reference</a>.</p>';
     }
-    if (e.key === "Escape" && document.activeElement === input) {
-      input.value = "";
-      apply();
-    }
+    detail.innerHTML = html;
+  }
+
+  nodes.forEach(function (n) {
+    n.addEventListener("click", function () { select(n.dataset.node); });
+    n.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+        e.preventDefault();
+        select(n.dataset.node);
+      }
+    });
   });
-  apply();
+
+  // Start on the hub so the panel is never empty and the interaction is obvious.
+  select("fasta");
 })();
 </script>
 </body>

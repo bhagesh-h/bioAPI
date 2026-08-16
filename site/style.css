@@ -1,0 +1,420 @@
+/* bioAPI — shared styles for index.html and reference.html */
+/* ---- tokens -------------------------------------------------------- */
+:root {
+  --paper:  #EAEEF1;
+  --panel:  #F8FAFB;
+  --ink:    #0E1519;
+  --ink-2:  #55636E;
+  --ink-3:  #7C8A95;
+  --rule:   #C6D0D7;
+  --rule-2: #DBE3E8;
+  --accent: #1B57B8;
+  --accent-soft: #E2EAF7;
+  /* Sanger trace colours — the only place colour is spent */
+  --base-a: #1D8F4E;
+  --base-c: #2A62C4;
+  --base-g: #B5790C;
+  --base-t: #CE3B31;
+
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --gap: clamp(3.5rem, 8vw, 6.5rem);
+  --pad: clamp(1.25rem, 4vw, 2.5rem);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:  #0D1317;
+    --panel:  #141D23;
+    --ink:    #E5EBEF;
+    --ink-2:  #98A7B3;
+    --ink-3:  #6F808C;
+    --rule:   #26333C;
+    --rule-2: #1C272E;
+    --accent: #7CACFF;
+    --accent-soft: #17252F;
+    --base-a: #4BC47D;
+    --base-c: #6E9EF5;
+    --base-g: #E0A93A;
+    --base-t: #F0665A;
+  }
+}
+
+/* ---- base ---------------------------------------------------------- */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 5rem; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 1rem/1.65 var(--sans);
+  font-feature-settings: "kern", "liga";
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+h1, h2, h3 { font-family: var(--mono); font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+p { margin: 0 0 1rem; }
+p:last-child { margin-bottom: 0; }
+code { font-family: var(--mono); font-size: 0.9em; }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding-inline: var(--pad); }
+.section { padding-block: var(--gap); border-top: 1px solid var(--rule-2); }
+.section h2 { font-size: clamp(1.5rem, 3.2vw, 2.1rem); letter-spacing: -0.035em; line-height: 1.15; }
+.eyebrow {
+  font: 500 0.75rem/1 var(--mono);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-3); margin: 0 0 1.25rem;
+}
+.lede { font-size: clamp(1.02rem, 1.6vw, 1.15rem); color: var(--ink-2); max-width: 62ch; }
+
+/* ---- header -------------------------------------------------------- */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--paper);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--rule-2);
+}
+.topbar .wrap { display: flex; align-items: center; gap: 1rem; height: 3.5rem; }
+.mark { font: 600 1.0625rem/1 var(--mono); letter-spacing: -0.03em; color: var(--ink); text-decoration: none; }
+.mark span { color: var(--base-a); }
+.ver {
+  font: 500 0.6875rem/1 var(--mono); letter-spacing: 0.06em;
+  color: var(--ink-2); border: 1px solid var(--rule); border-radius: 999px;
+  padding: 0.28rem 0.5rem;
+}
+.topnav { margin-left: auto; display: flex; gap: 1.25rem; }
+.topnav a {
+  font: 500 0.8125rem/1 var(--mono); color: var(--ink-2);
+  text-decoration: none; letter-spacing: -0.01em;
+}
+.topnav a:hover { color: var(--ink); }
+@media (max-width: 880px) { .topnav a.opt { display: none; } }
+@media (max-width: 560px) {
+  .topbar .wrap { gap: 0.75rem; }
+  .topnav { gap: 0.9rem; }
+  .ver { display: none; }  /* the version is still in the footer */
+}
+
+/* ---- hero ---------------------------------------------------------- */
+.hero { padding-block: clamp(2.75rem, 6vw, 4.5rem) clamp(3rem, 6vw, 4.5rem); }
+.hero h1 {
+  font-size: clamp(2.3rem, 6.4vw, 4rem);
+  line-height: 1.02; letter-spacing: -0.045em;
+  margin: 0 0 1.5rem; max-width: 16ch;
+}
+.hero h1 em { font-style: normal; color: var(--ink-3); }
+.hero .lede { margin-bottom: 2rem; }
+.cta { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.btn {
+  font: 500 0.875rem/1 var(--mono); text-decoration: none;
+  padding: 0.7rem 1.1rem; border-radius: 3px; border: 1px solid var(--ink);
+  background: var(--ink); color: var(--paper); transition: transform 0.12s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--rule); }
+.btn.ghost:hover { border-color: var(--ink); }
+
+/* ---- signature: the strand ------------------------------------------ */
+.strand {
+  margin: clamp(2.5rem, 6vw, 4rem) 0 0;
+  width: fit-content; max-width: 100%;
+  border: 1px solid var(--rule); border-radius: 4px;
+  background: var(--panel); padding: clamp(1.1rem, 3vw, 1.9rem);
+  overflow-x: auto;
+}
+.strand-head {
+  display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: baseline;
+  margin-bottom: 1.4rem;
+}
+.strand-head .op { font: 500 0.8125rem/1 var(--mono); color: var(--ink); }
+.strand-head .op-path { color: var(--base-c); font-weight: 600; }
+.strand-head .note { font: 400 0.75rem/1 var(--mono); color: var(--ink-3); }
+.ladder { display: grid; gap: 0.28rem; width: max-content; min-width: 100%; }
+.rung { display: flex; align-items: center; gap: clamp(0.12rem, 0.6vw, 0.3rem); }
+.tick {
+  font: 500 clamp(0.6rem, 1.7vw, 0.75rem)/1 var(--mono);
+  color: var(--ink-3); width: 2.1em; flex: none;
+}
+.tick.r { text-align: right; }
+.b {
+  font: 500 clamp(0.72rem, 2.4vw, 1.15rem)/1.5 var(--mono);
+  width: clamp(1.05rem, 3.2vw, 1.55rem); flex: none;
+  text-align: center; border-radius: 2px;
+}
+.b[data-b="A"] { color: var(--base-a); }
+.b[data-b="C"] { color: var(--base-c); }
+.b[data-b="G"] { color: var(--base-g); }
+.b[data-b="T"] { color: var(--base-t); }
+.pair { color: var(--ink-3); opacity: 0.55; }
+.strand-out {
+  margin-top: 1.4rem; padding-top: 1.1rem; border-top: 1px dashed var(--rule);
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 0.9rem;
+}
+.strand-out .lbl {
+  font: 500 0.6875rem/1 var(--mono); letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.strand-out .val { font: 600 clamp(0.85rem, 2.4vw, 1.05rem)/1 var(--mono); letter-spacing: 0.04em; }
+
+/* load sequence */
+.anim .b, .anim .pair, .anim .strand-out { opacity: 0; }
+.anim.go .b, .anim.go .pair { animation: rise 0.34s ease-out forwards; }
+.anim.go .strand-out { animation: rise 0.4s ease-out 0.95s forwards; }
+@keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .anim .b, .anim .pair, .anim .strand-out { opacity: 1 !important; animation: none !important; }
+  html { scroll-behavior: auto; }
+}
+
+/* ---- two-column blocks --------------------------------------------- */
+.cols { display: grid; gap: clamp(1.5rem, 4vw, 2.5rem); }
+/* without this a long <pre> line widens its track instead of scrolling */
+.cols > * { min-width: 0; }
+@media (min-width: 860px) { .cols { grid-template-columns: 1fr 1fr; } }
+
+pre {
+  margin: 0; padding: 1rem 1.1rem; overflow-x: auto;
+  background: var(--panel); border: 1px solid var(--rule-2); border-radius: 4px;
+  font: 400 0.8125rem/1.7 var(--mono); color: var(--ink);
+  tab-size: 2;
+}
+/* Syntax roles reuse the trace palette, so the page keeps one colour language:
+   amber = the command, blue = the address, green = the data, red = literals. */
+pre .c   { color: var(--ink-3); }                    /* comment */
+pre .cmd { color: var(--base-g); font-weight: 600; } /* the program being run */
+pre .sub { color: var(--ink); font-weight: 500; }    /* its subcommand */
+pre .flg { color: var(--ink-2); }                    /* option flags */
+pre .mth { color: var(--ink); font-weight: 600; }    /* HTTP method */
+pre .url { color: var(--ink-2); }                    /* scheme and host */
+pre .ep  { color: var(--base-c); font-weight: 600; } /* the endpoint path */
+pre .str { color: var(--base-a); }                   /* string literal */
+pre .key { color: var(--base-c); }                   /* JSON key */
+pre .lit { color: var(--base-t); }                   /* number, boolean, null */
+.blocktitle {
+  font: 500 0.6875rem/1 var(--mono); letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-3); margin: 0 0 0.7rem;
+}
+
+/* ---- features ------------------------------------------------------ */
+.feats { display: grid; gap: 0; margin-top: 2.5rem; border-top: 1px solid var(--rule-2); }
+@media (min-width: 800px) { .feats { grid-template-columns: 1fr 1fr; column-gap: clamp(2rem, 5vw, 4rem); } }
+.feat { padding: 1.5rem 0; border-bottom: 1px solid var(--rule-2); }
+.feat h3 { font-size: 0.9375rem; letter-spacing: -0.01em; margin-bottom: 0.5rem; }
+.feat p { font-size: 0.9375rem; color: var(--ink-2); margin: 0; }
+
+/* ---- endpoints ----------------------------------------------------- */
+.filterbar {
+  display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: center;
+  margin-top: 2rem;
+}
+#filter {
+  flex: 1 1 16rem; min-width: 0; appearance: none; -webkit-appearance: none;
+  font: 400 0.875rem/1 var(--mono); color: var(--ink);
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 3px;
+  padding: 0.7rem 0.85rem;
+}
+#filter::placeholder { color: var(--ink-3); }
+#count { font: 400 0.75rem/1 var(--mono); color: var(--ink-3); }
+
+.group { margin-top: 3rem; }
+.group-head {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 0.9rem;
+  padding-bottom: 0.75rem; border-bottom: 1px solid var(--rule);
+}
+/* Each group is a <details>; the head is its <summary>, so the whole row is the
+   toggle and it works from the keyboard with no script. */
+summary.group-head { cursor: pointer; list-style: none; }
+summary.group-head::-webkit-details-marker { display: none; }
+summary.group-head::before {
+  content: "▸"; flex: none; display: inline-block;
+  color: var(--ink-3); font-size: 0.85em;
+  transition: transform 0.15s ease;
+}
+details[open] > summary.group-head::before { transform: rotate(90deg); }
+summary.group-head:hover::before,
+details[open] > summary.group-head::before { color: var(--base-c); }
+summary.group-head:hover h3 { color: var(--base-c); }
+summary.group-head:focus-visible { outline-offset: -2px; }
+.group-body { padding-top: 0.25rem; }
+@media (prefers-reduced-motion: reduce) {
+  summary.group-head::before { transition: none; }
+}
+
+#toggle-all {
+  font: 500 0.75rem/1 var(--mono); color: var(--ink-2);
+  background: transparent; border: 1px solid var(--rule); border-radius: 3px;
+  padding: 0.6rem 0.75rem; cursor: pointer;
+}
+#toggle-all:hover { border-color: var(--ink); color: var(--ink); }
+.group-head h3 { font-size: 1.0625rem; letter-spacing: -0.02em; }
+.group-head .path {
+  font: 500 0.75rem/1 var(--mono); color: var(--base-c);
+  background: var(--accent-soft); border: 1px solid var(--rule-2);
+  border-radius: 2px; padding: 0.3rem 0.45rem;
+}
+.group-head .n { font: 400 0.75rem/1 var(--mono); color: var(--ink-3); margin-left: auto; }
+.group-note { font-size: 0.875rem; color: var(--ink-2); margin: 0.9rem 0 0; max-width: 74ch; }
+.group-note code { color: var(--ink); }
+
+table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+th, td { text-align: left; vertical-align: top; padding: 0.7rem 0.9rem 0.7rem 0; border-bottom: 1px solid var(--rule-2); }
+th {
+  font: 500 0.6875rem/1 var(--mono); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-3); padding-top: 1rem;
+}
+td { font-size: 0.9375rem; }
+td.p { white-space: nowrap; }
+td:last-child, th:last-child { padding-right: 0; }
+
+.m {
+  display: inline-block; min-width: 3.1rem; text-align: center;
+  font: 500 0.6875rem/1 var(--mono); letter-spacing: 0.06em;
+  padding: 0.28rem 0.4rem; border-radius: 2px; margin-right: 0.55rem;
+  border: 1px solid var(--rule); color: var(--ink-2); background: transparent;
+}
+.m.post { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+td.p code { font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; }
+/* Only the endpoint tables get the path colour — not the status-code,
+   header and configuration tables, which also use td.p. */
+[data-group] td.p code { color: var(--base-c); }
+td.f { color: var(--ink-2); font-size: 0.875rem; }
+td.f code { color: var(--ink); white-space: nowrap; }
+.dep { font: 500 0.625rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--base-t); }
+.tablewrap { overflow-x: auto; }
+
+/* ---- reference ----------------------------------------------------- */
+.subsec { margin-top: 3rem; }
+.subsec:first-of-type { margin-top: 2.5rem; }
+.subsec h3 { font-size: 1rem; margin-bottom: 0.4rem; }
+.subsec > p { font-size: 0.9375rem; color: var(--ink-2); max-width: 74ch; }
+.codes { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
+.codes code {
+  font-size: 0.75rem; padding: 0.32rem 0.5rem; border-radius: 2px;
+  background: var(--accent-soft); color: var(--ink); border: 1px solid var(--rule-2);
+}
+
+/* ---- footer -------------------------------------------------------- */
+footer { border-top: 1px solid var(--rule-2); padding-block: 2.5rem 3.5rem; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 0.75rem 1.75rem; align-items: baseline; }
+footer p, footer a { font: 400 0.8125rem/1.6 var(--mono); color: var(--ink-3); margin: 0; }
+footer a { color: var(--ink-2); text-decoration: none; }
+footer a:hover { color: var(--accent); text-decoration: underline; }
+
+/* ==== landing page ==================================================== */
+
+/* Two entry points, because the two audiences each know half of this. */
+.audience { display: grid; gap: 1.25rem; margin-top: 2.5rem; }
+@media (min-width: 820px) { .audience { grid-template-columns: 1fr 1fr; } }
+.card {
+  border: 1px solid var(--rule); border-radius: 4px; background: var(--panel);
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+}
+.card .who {
+  display: block; margin-bottom: 0.8rem;
+  font: 500 0.6875rem/1 var(--mono); letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.card h3 { font-size: 1rem; margin-bottom: 0.7rem; }
+.card p { font-size: 0.9375rem; color: var(--ink-2); }
+
+/* What it does, described as tasks rather than as routes. */
+.tasks { margin-top: 2.5rem; border-top: 1px solid var(--rule-2); }
+.task {
+  padding: 1.6rem 0; border-bottom: 1px solid var(--rule-2);
+  display: grid; gap: 0.6rem clamp(1.5rem, 4vw, 3rem);
+}
+@media (min-width: 820px) { .task { grid-template-columns: 17rem 1fr; } }
+.task h3 { font-size: 0.9375rem; letter-spacing: -0.01em; }
+.task .n { display: block; margin-top: 0.45rem; font: 400 0.75rem/1 var(--mono); color: var(--ink-3); }
+.task p { font-size: 0.9375rem; color: var(--ink-2); margin: 0; }
+.task .eg { font-size: 0.875rem; color: var(--ink-3); margin-top: 0.55rem; }
+
+/* Glossary: the words each audience is missing. */
+.gloss {
+  margin: 2rem 0 0; display: grid; gap: 0 clamp(2rem, 5vw, 4rem);
+  border-top: 1px solid var(--rule-2);
+}
+@media (min-width: 820px) { .gloss { grid-template-columns: 1fr 1fr; } }
+.term { padding: 1.1rem 0; border-bottom: 1px solid var(--rule-2); }
+.term dt { font: 600 0.875rem/1.4 var(--mono); color: var(--ink); margin-bottom: 0.35rem; }
+.term dd { margin: 0; font-size: 0.9375rem; color: var(--ink-2); }
+
+/* Numbered because the order genuinely matters — you cannot call it before it runs.
+   Same two-column rhythm as .task, which also leaves the commands room to breathe. */
+.steps { margin-top: 2.5rem; border-top: 1px solid var(--rule-2); }
+.step {
+  padding: 1.75rem 0; border-bottom: 1px solid var(--rule-2);
+  display: grid; gap: 0.9rem clamp(1.5rem, 4vw, 3rem);
+}
+@media (min-width: 820px) { .step { grid-template-columns: 20rem 1fr; } }
+.step > * { min-width: 0; }
+.step .num {
+  display: block; margin-bottom: 0.6rem;
+  font: 600 0.75rem/1 var(--mono); letter-spacing: 0.1em; color: var(--base-c);
+}
+.step h3 { font-size: 0.9375rem; margin-bottom: 0.5rem; }
+.step p { font-size: 0.9375rem; color: var(--ink-2); margin: 0; }
+.step p + p { margin-top: 0.7rem; }
+
+/* The hand-off to the reference page. */
+.next {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 1rem;
+  margin-top: 2.5rem; padding: clamp(1.25rem, 3vw, 1.6rem);
+  border: 1px solid var(--rule); border-radius: 4px; background: var(--panel);
+  text-decoration: none;
+}
+.next:hover { border-color: var(--accent); }
+.next .t { font: 600 1rem/1.3 var(--mono); color: var(--ink); }
+.next .d { font-size: 0.9375rem; color: var(--ink-2); flex: 1 1 22ch; }
+.next .go { font: 500 0.8125rem/1 var(--mono); color: var(--accent); margin-left: auto; }
+
+/* ---- interoperability graph ----------------------------------------- */
+/* Nodes are the data you hold; edges are the endpoints that turn one into
+   another. Click a node to see which endpoints accept it. */
+.dag {
+  margin-top: 2.5rem; padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid var(--rule); border-radius: 4px; background: var(--panel);
+  overflow-x: auto;
+}
+.dag svg { display: block; width: 100%; min-width: 660px; height: auto; }
+
+.dagedge { fill: none; stroke: var(--rule); stroke-width: 1.4; marker-end: url(#arrow); }
+.dagedge.on { stroke: var(--base-c); stroke-width: 2.2; marker-end: url(#arrow-on); }
+#arrow path { fill: var(--rule); }
+#arrow-on path { fill: var(--base-c); }
+/* paint-order puts the stroke behind the glyphs, giving each label a halo in the
+   panel colour so it stays readable where it crosses an edge. */
+.daglabel {
+  font: 400 10px var(--mono); fill: var(--ink-3);
+  paint-order: stroke; stroke: var(--panel); stroke-width: 3.5px; stroke-linejoin: round;
+}
+
+.dagnode { cursor: pointer; }
+.dagnode rect {
+  fill: var(--paper); stroke: var(--rule); stroke-width: 1.2;
+  transition: fill 0.15s ease, stroke 0.15s ease;
+}
+.dagnode text { font: 500 13px var(--mono); fill: var(--ink); pointer-events: none; }
+.dagnode:hover rect { stroke: var(--base-c); }
+.dagnode:focus-visible { outline: none; }
+.dagnode:focus-visible rect { stroke: var(--accent); stroke-width: 2.4; }
+.dagnode.on rect { fill: var(--accent-soft); stroke: var(--base-c); stroke-width: 2.4; }
+@media (prefers-reduced-motion: reduce) { .dagnode rect { transition: none; } }
+
+.dag-detail { margin-top: 1.5rem; padding-top: 1.35rem; border-top: 1px solid var(--rule-2); }
+.dag-detail h3 { font-size: 1rem; margin-bottom: 0.45rem; }
+.dag-detail .blurb { font-size: 0.9375rem; color: var(--ink-2); margin: 0 0 1.1rem; max-width: 70ch; }
+.dag-ops { list-style: none; margin: 0; padding: 0; }
+.dag-ops li { padding: 0.6rem 0; border-top: 1px solid var(--rule-2); }
+.dag-ops li:first-child { border-top: 0; }
+.dag-ops .route { font: 500 0.8125rem/1.5 var(--mono); color: var(--base-c); }
+.dag-ops .route .verb { color: var(--ink-2); margin-right: 0.5rem; }
+.dag-ops .what { font-size: 0.875rem; color: var(--ink-2); display: block; margin-top: 0.15rem; }
+.dag-hint { font-size: 0.875rem; color: var(--ink-3); margin: 0; }
+
+/* Plain-language caption under the strand. */
+.strand-why { font-size: 0.9375rem; color: var(--ink-2); max-width: 62ch; margin-top: 1.25rem; }
+.strand-out .call { font: 500 0.75rem/1 var(--mono); color: var(--base-c); }

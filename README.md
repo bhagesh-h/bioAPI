@@ -267,6 +267,8 @@ that matter most in production:
 - [Project site](https://bhagesh-h.github.io/bioAPI/) — the same endpoint reference as a
   single page, published from [`site/`](site/) by
   [`.github/workflows/pages.yml`](.github/workflows/pages.yml)
+- [Roadmap](docs/roadmap.md) — candidate additions, measured against SeqKit and against
+  what Biopython and pysam already provide in the image. Nothing there is built yet
 - [Architecture](docs/architecture.md) — how the layers fit together and why
 - [API reference](docs/api-reference.md) — every endpoint, with request shapes
 - [Development](docs/development.md) — working on the code, all through Docker

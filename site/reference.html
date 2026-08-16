@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API reference — bioAPI</title>
+<meta name="description" content="Every bioAPI endpoint with its request fields, plus the response envelope, error codes, status codes, headers, authentication, rate limiting and configuration.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230E1519'/><rect x='7' y='5' width='18' height='4' rx='2' fill='%231D8F4E'/><rect x='7' y='11' width='18' height='4' rx='2' fill='%232A62C4'/><rect x='7' y='17' width='18' height='4' rx='2' fill='%23C98A12'/><rect x='7' y='23' width='18' height='4' rx='2' fill='%23CE3B31'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="mark" href="index.html">bio<span>API</span></a>
+    <span class="ver">v0.0.1</span>
+    <nav class="topnav">
+      <a href="index.html">← Overview</a>
+      <a class="opt" href="#getting-started">Getting started</a>
+      <a href="#api-reference">Endpoints</a>
+      <a href="#specification">Specification</a>
+      <a href="https://github.com/bhagesh-h/bioAPI">GitHub&nbsp;↗</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero" style="padding-block:clamp(2.5rem,5vw,3.5rem) 0">
+  <div class="wrap">
+    <p class="eyebrow">Technical documentation</p>
+    <h1 style="font-size:clamp(2rem,5vw,3rem);max-width:20ch">API reference</h1>
+    <p class="lede">
+      Every endpoint, its request fields and its behaviour, followed by the response
+      contract shared by all of them. If you are new to bioAPI, the
+      <a href="index.html">overview</a> explains what it is in plain language first.
+    </p>
+  </div>
+</section>
+
+<!-- ============================ quick start ============================ -->
+<section class="section" id="getting-started">
+  <div class="wrap">
+    <p class="eyebrow">Getting started</p>
+    <h2>Docker is the only supported toolchain</h2>
+    <p class="lede" style="margin-top:1rem">
+      pysam's C extensions build once, inside an image where they are known to work,
+      rather than on each contributor's laptop. There is no host virtualenv and no
+      <code>pip install</code>.
+    </p>
+
+    <div class="cols" style="margin-top:2.5rem">
+      <div>
+        <p class="blocktitle">run it</p>
+<pre><span class="c"># the API comes up on 127.0.0.1:8000</span>
+<span class="cmd">git</span> <span class="sub">clone</span> <span class="url">https://github.com/bhagesh-h/bioAPI.git</span>
+<span class="cmd">cd</span> bioAPI
+<span class="cmd">docker</span> <span class="sub">compose up</span> api
+
+<span class="c"># interactive docs, generated from the code</span>
+<span class="cmd">open</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/docs</span></pre>
+        <p class="blocktitle" style="margin-top:1.75rem">call it</p>
+<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/\
+sequences/reverse-complement</span> \
+  <span class="flg">-H</span> <span class="str">'Content-Type: application/json'</span> \
+  <span class="flg">-d</span> <span class="str">'{"sequence":"ATGCGTAA","alphabet":"dna"}'</span></pre>
+      </div>
+      <div>
+        <p class="blocktitle">what comes back</p>
+<pre>{
+  <span class="key">"success"</span>: <span class="lit">true</span>,
+  <span class="key">"message"</span>: <span class="lit">null</span>,
+  <span class="key">"data"</span>: { <span class="key">"result"</span>: <span class="str">"TTACGCAT"</span>, <span class="key">"length"</span>: <span class="lit">8</span> },
+  <span class="key">"error"</span>: <span class="lit">null</span>,
+  <span class="key">"warnings"</span>: [],
+  <span class="key">"request_id"</span>: <span class="str">"c20b1ca5-9c54-4297-8040-a944c809bc5b"</span>
+}</pre>
+        <p class="blocktitle" style="margin-top:1.75rem">everyday commands</p>
+<pre><span class="cmd">make</span> <span class="sub">up</span>       <span class="c"># serve on port 8000</span>
+<span class="cmd">make</span> <span class="sub">test</span>     <span class="c"># suite behind a 90% coverage gate</span>
+<span class="cmd">make</span> <span class="sub">lint</span>     <span class="c"># ruff + mypy --strict</span>
+<span class="cmd">make</span> <span class="sub">smoke</span>    <span class="c"># start, probe /health/ready, tear down</span>
+<span class="cmd">make</span> <span class="sub">shell</span>    <span class="c"># a shell in the dev image</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ============================ endpoints ============================ -->
+<section class="section" id="api-reference">
+  <div class="wrap">
+    <p class="eyebrow">API reference · 44 endpoints</p>
+    <h2>Endpoint reference</h2>
+    <p class="lede" style="margin-top:1rem">
+      Versioned routes live under <code>/api/v1</code>. Health and metadata sit at the root
+      so probes never move between versions. The live OpenAPI document at
+      <code>/api/v1/openapi.json</code> is always the authority.
+    </p>
+
+    <div class="filterbar">
+      <input id="filter" type="search" placeholder="Filter endpoints — try &quot;fastq&quot;, &quot;split&quot;, &quot;vcf&quot;  (press /)" aria-label="Filter endpoints">
+      <button id="toggle-all" type="button" aria-expanded="false">Expand all</button>
+      <span id="count" aria-live="polite"></span>
+    </div>
+
+    <!-- ---- health ---- -->
+    <details class="group" data-group>
+      <summary class="group-head">
+        <h3>Health and metadata</h3>
+        <span class="n" data-n>7</span>
+      </summary>
+      <div class="group-body">
+      <p class="group-note">
+        Never require an API key and are exempt from rate limiting, so an orchestrator's
+        probes cannot be locked out.
+      </p>
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:34%">Endpoint</th><th>What it does</th><th style="width:26%">Returns</th></tr></thead>
+        <tbody>
+          <tr data-ep><td class="p"><span class="m">GET</span><code>/</code></td><td>Service name, version and links to the documentation.</td><td class="f"><code>ServiceInfo</code></td></tr>
+          <tr data-ep><td class="p"><span class="m">GET</span><code>/health</code></td><td>Liveness — 200 for as long as the process is serving.</td><td class="f"><code>LivenessStatus</code></td></tr>
+          <tr data-ep><td class="p"><span class="m">GET</span><code>/health/live</code></td><td>Liveness, under its explicit name.</td><td class="f"><code>LivenessStatus</code></td></tr>
+          <tr data-ep><td class="p"><span class="m">GET</span><code>/health/ready</code></td><td>Readiness — parses a probe record with Biopython and loads pysam's compiled extension. 503 if either fails, so a broken image leaves the load balancer instead of failing real requests.</td><td class="f"><code>ReadinessStatus</code>, 503 on failure</td></tr>
+          <tr data-ep><td class="p"><span class="m">GET</span><code>/ready</code> <span class="dep">alias</span></td><td>Deprecated alias of <code>/health/ready</code>.</td><td class="f"><code>ReadinessStatus</code></td></tr>
+          <tr data-ep><td class="p"><span class="m">GET</span><code>/version</code></td><td>App, Python, Biopython and pysam versions.</td><td class="f"><code>VersionInfo</code></td></tr>
+          <tr data-ep><td class="p"><span class="m">GET</span><code>/metrics</code></td><td>Prometheus metrics. Health paths are excluded from the histograms.</td><td class="f">Prometheus text</td></tr>
+        </tbody>
+      </table>
+      </div>
+      </div>
+    </details>
+
+    <!-- ---- sequences ---- -->
+    <details class="group" data-group>
+      <summary class="group-head">
+        <h3>Sequences</h3>
+        <span class="path">/api/v1/sequences</span>
+        <span class="n" data-n>11</span>
+      </summary>
+      <div class="group-body">
+      <p class="group-note">
+        All eleven share a JSON body: <code>sequence</code>, optional <code>alphabet</code>
+        (<code>dna</code>, <code>rna</code>, <code>protein</code>, or omitted to auto-detect),
+        <code>uppercase</code> and <code>remove_whitespace</code>. Whitespace is stripped
+        before processing, so a wrapped sequence pastes in fine. IUPAC ambiguity codes are
+        valid but produce a warning, because most calculations treat the code literally
+        rather than expanding it. Nucleotide-only operations reject a sequence declared as
+        <code>protein</code>.
+      </p>
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:34%">Endpoint</th><th>What it does</th><th style="width:26%">Extra fields</th></tr></thead>
+        <tbody>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/reverse</code></td><td>Reverse the sequence.</td><td class="f">—</td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/complement</code></td><td>Complement each base. RNA input stays RNA.</td><td class="f">—</td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/reverse-complement</code></td><td>The opposite strand, read 5'→3'.</td><td class="f">—</td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/transcribe</code></td><td>DNA → RNA.</td><td class="f">—</td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/back-transcribe</code></td><td>RNA → DNA.</td><td class="f">—</td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/translate</code></td><td>Nucleotide → protein under any NCBI genetic code. Truncates to the last whole codon and says so in <code>warnings</code>; shorter than one codon is a 400.</td><td class="f"><code>table</code> (default 1), <code>to_stop</code> (default false)</td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/gc-content</code></td><td>GC percentage, with G/C and A/T counts.</td><td class="f">—</td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/count-bases</code></td><td>Residue frequencies, most common first.</td><td class="f">—</td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/kmer</code></td><td>K-mer counts, optionally only the most frequent.</td><td class="f"><code>k</code> (1–32, default 3), <code>top</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/find-motif</code></td><td>Motif positions as 0-based half-open coordinates — <code>{"start":0,"end":2}</code> is the first two characters.</td><td class="f"><code>motif</code> (required), <code>allow_overlaps</code> (default true)</td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/validate</code></td><td>Report validity without rejecting. Always 200, with <code>is_valid</code> and the offending characters listed — use it before committing to an operation.</td><td class="f">—</td></tr>
+        </tbody>
+      </table>
+      </div>
+      </div>
+    </details>
+
+    <!-- ---- fasta ---- -->
+    <details class="group" data-group>
+      <summary class="group-head">
+        <h3>FASTA utilities</h3>
+        <span class="path">/api/v1/fasta</span>
+        <span class="n" data-n>14</span>
+      </summary>
+      <div class="group-body">
+      <p class="group-note">
+        Every request carries <code>fasta_string</code> and an optional
+        <code>line_width</code> (default 60; <code>0</code> puts each sequence on one line).
+        Multi-line sequences are joined on parse and re-wrapped on output, and blank lines
+        between records are tolerated.
+      </p>
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:34%">Endpoint</th><th>What it does</th><th style="width:26%">Extra fields</th></tr></thead>
+        <tbody>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/stats</code></td><td>Count, min, max, mean length, N50, GC, and a per-sequence breakdown.</td><td class="f">—</td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/shorten-headers</code></td><td>Truncate headers, warning when the truncation collides.</td><td class="f"><code>n</code> — characters to keep</td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/get-n-sequences</code></td><td>The first N records.</td><td class="f"><code>n</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/filter-by-length</code></td><td>Keep records inside a length range.</td><td class="f"><code>min_length</code>, <code>max_length</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/extract-subsequence</code></td><td>Slice a 1-based inclusive range from each record. Fails the whole request if any sequence is shorter than <code>end</code>, naming it in <code>error.details</code>.</td><td class="f"><code>start</code>, <code>end</code>, <code>skip_short</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/sample-sequences</code></td><td>A random sample. Without a seed it is genuinely random and differs between calls.</td><td class="f"><code>n</code>, <code>seed</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/split</code></td><td>Into <code>n</code> chunks or chunks of <code>size</code> — one or the other, never both.</td><td class="f"><code>n</code> <em>or</em> <code>size</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/merge</code></td><td>Concatenate documents. Duplicate ids are a warning; deduplication suffixes them <code>_2</code>, <code>_3</code> in order of appearance.</td><td class="f"><code>fasta_strings</code> (≥2), <code>deduplicate_ids</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/convert-case</code></td><td>Upper- or lower-case the sequences, leaving headers alone.</td><td class="f"><code>case</code>: <code>upper</code> | <code>lower</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/remove-unknown-chars</code></td><td>Strip anything outside ACGT, optionally keeping IUPAC codes.</td><td class="f"><code>keep_ambiguity_codes</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/rename-sequences</code></td><td>Apply an <code>{old_id: new_id}</code> map. Keys matching no record are warned about — usually a typo.</td><td class="f"><code>rename_map</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/modify-descriptions</code></td><td>Apply an <code>{id: description}</code> map, with the same warning on unmatched keys.</td><td class="f"><code>description_map</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/find-unique</code></td><td>Deduplicate by sequence content rather than by identifier.</td><td class="f">—</td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/extract-ids</code></td><td>List every identifier in the document.</td><td class="f">—</td></tr>
+        </tbody>
+      </table>
+      </div>
+      </div>
+    </details>
+
+    <!-- ---- fastq ---- -->
+    <details class="group" data-group>
+      <summary class="group-head">
+        <h3>FASTQ utilities</h3>
+        <span class="path">/api/v1/fastq</span>
+        <span class="n" data-n>5</span>
+      </summary>
+      <div class="group-body">
+      <p class="group-note">
+        Every request carries <code>fastq_string</code> and <code>quality_offset</code>
+        (33 for Sanger and Illumina 1.8+, 64 for older Illumina). Parsing is strict: exactly
+        four lines per read, <code>@</code> first, <code>+</code> third, sequence and quality
+        of equal non-zero length. Errors name the read number. Line-wrapped FASTQ cannot be
+        parsed unambiguously and is rejected rather than guessed at.
+      </p>
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:34%">Endpoint</th><th>What it does</th><th style="width:26%">Extra fields</th></tr></thead>
+        <tbody>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/stats</code></td><td>Read count, lengths, GC, mean quality, and Q20/Q30 percentages. A quality string that decodes below zero produces a warning suggesting the other encoding.</td><td class="f">—</td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/quality-filter</code></td><td>Keep reads above a mean Phred score and a minimum length.</td><td class="f"><code>min_quality</code> (default 20), <code>min_length</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/to-fasta</code></td><td>Drop the quality track.</td><td class="f"><code>line_width</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/compress-gz</code></td><td>Gzip the document, returned as <code>data_base64</code> so the bytes survive JSON. Base64 adds a third to the size — for large files use the upload endpoints.</td><td class="f">—</td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/decompress-gz</code></td><td>The reverse, validating that the result really is FASTQ.</td><td class="f"><code>fastq_gz_base64</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+      </div>
+    </details>
+
+    <!-- ---- files ---- -->
+    <details class="group" data-group>
+      <summary class="group-head">
+        <h3>Files</h3>
+        <span class="path">/api/v1/files</span>
+        <span class="n" data-n>4</span>
+      </summary>
+      <div class="group-body">
+      <p class="group-note">
+        Multipart uploads. Recognised for analysis: FASTA, FASTQ, GenBank, EMBL, SAM, BAM,
+        VCF, GFF, GTF and plain text.
+      </p>
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:34%">Endpoint</th><th>What it does</th><th style="width:26%">Form fields</th></tr></thead>
+        <tbody>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/stats</code></td><td>Analyse an upload. The format comes from the first 64 KB of content combined with the filename, reported with a confidence of <code>high</code>, <code>medium</code> (content and extension disagree — content wins) or <code>low</code>. Which statistics block is filled depends on the format: <code>sequence_stats</code>, <code>quality_stats</code>, <code>bam_stats</code>, <code>gff_stats</code>, <code>vcf_stats</code>, or a line count.</td><td class="f"><code>file</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/summary</code> <span class="dep">alias</span></td><td>Deprecated alias of <code>/stats</code>.</td><td class="f"><code>file</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/extract-gff</code></td><td>Slice FASTA features using GFF/GTF coordinates, 1-based inclusive as GFF specifies. Minus-strand features are reverse-complemented. Unknown sequence names, non-numeric coordinates and out-of-range features are skipped and explained; matching nothing at all is a 422. Returns FASTA as <code>text/plain</code>.</td><td class="f"><code>fasta_file</code>, <code>gff_file</code>, <code>feature_type</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/vcf/extract</code></td><td>List variants of one class. Any ALT of a different length to REF is an INDEL; equal lengths with a single-base REF is a SNP; equal lengths with a longer REF is an MNP; no usable ALT (<code>*</code>, <code>.</code>, <code>&lt;NON_REF&gt;</code>) is OTHER. Reports both <code>count</code> and <code>total_in_file</code>.</td><td class="f"><code>vcf_file</code>, <code>variant_type</code>: <code>ALL</code> | <code>SNP</code> | <code>INDEL</code> | <code>MNP</code> | <code>OTHER</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+      </div>
+    </details>
+
+    <!-- ---- conversions ---- -->
+    <details class="group" data-group>
+      <summary class="group-head">
+        <h3>Conversions</h3>
+        <span class="path">/api/v1/conversions</span>
+        <span class="n" data-n>2</span>
+      </summary>
+      <div class="group-body">
+      <p class="group-note">
+        Both return a file directly, with the metadata in <code>X-</code> response headers
+        rather than a JSON body.
+      </p>
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:34%">Endpoint</th><th>What it does</th><th style="width:26%">Parameters</th></tr></thead>
+        <tbody>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/convert</code></td><td>Convert between formats. The pair is checked before the upload is read, so an unsupported one costs no I/O and comes back with the list of targets that would work. GenBank and EMBL need a <code>molecule_type</code>; when the source lacks one it is inferred and reported as a warning. Converting from FASTQ drops the quality scores, also as a warning.</td><td class="f">query <code>source_format</code>, <code>target_format</code>; multipart <code>file</code></td></tr>
+          <tr data-ep><td class="p"><span class="m post">POST</span><code>/vcf-to-fasta</code></td><td>Apply a VCF to a reference to build a consensus. The first ALT of each record is used, applied from the end of each sequence backwards so an indel cannot shift the coordinates of the variants still pending. A variant is skipped when its chromosome is absent, its position is out of range, or its REF does not match the reference — usually a different reference build. References with no variants pass through unchanged, so the record count always matches the input.</td><td class="f"><code>reference_fasta</code>, <code>vcf_file</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+      </div>
+    </details>
+
+    <!-- ---- formats ---- -->
+    <details class="group" data-group>
+      <summary class="group-head">
+        <h3>Formats</h3>
+        <span class="path">/api/v1/formats</span>
+        <span class="n" data-n>1</span>
+      </summary>
+      <div class="group-body">
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:34%">Endpoint</th><th>What it does</th><th style="width:26%">Returns</th></tr></thead>
+        <tbody>
+          <tr data-ep><td class="p"><span class="m">GET</span><code>/api/v1/formats</code></td><td>Which formats this deployment can analyse, which conversions are available, and why the remaining pairs are not.</td><td class="f"><code>FormatCapabilities</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="group-note" style="margin-top:1.25rem">
+        The matrix it publishes: <code>fasta</code> → genbank, embl, tab, json ·
+        <code>fastq</code> → fasta, genbank, embl, tab, json ·
+        <code>genbank</code> → fasta, embl, tab, json ·
+        <code>embl</code> → fasta, genbank, tab, json ·
+        <code>tab</code> → fasta, genbank, embl, json ·
+        <code>text</code> → fasta, json. Anything targeting FASTQ from a source without
+        quality scores is refused with an explanation.
+      </p>
+      </div>
+    </details>
+  </div>
+</section>
+<!-- ============================ reference ============================ -->
+<section class="section" id="specification">
+  <div class="wrap">
+    <p class="eyebrow">Specification</p>
+    <h2>Conventions and configuration</h2>
+
+    <div class="subsec">
+      <h3>Response envelope</h3>
+      <p>Every JSON endpoint returns the same six fields, whether the call succeeded or not.</p>
+      <div class="cols" style="margin-top:1.25rem">
+        <div>
+          <p class="blocktitle">on success</p>
+<pre>{
+  <span class="key">"success"</span>: <span class="lit">true</span>,
+  <span class="key">"message"</span>: <span class="lit">null</span>,
+  <span class="key">"data"</span>: { },
+  <span class="key">"error"</span>: <span class="lit">null</span>,
+  <span class="key">"warnings"</span>: [],
+  <span class="key">"request_id"</span>: <span class="str">"0f7c0a6e-2c5b-4a8e-9d0f-6f7a1b2c3d4e"</span>
+}</pre>
+        </div>
+        <div>
+          <p class="blocktitle">on failure — data is null, error is populated</p>
+<pre>{
+  <span class="key">"success"</span>: <span class="lit">false</span>,
+  <span class="key">"message"</span>: <span class="str">"Sequence contains characters outside dna: Z"</span>,
+  <span class="key">"data"</span>: <span class="lit">null</span>,
+  <span class="key">"error"</span>: {
+    <span class="key">"code"</span>: <span class="str">"INVALID_SEQUENCE"</span>,
+    <span class="key">"message"</span>: <span class="str">"Sequence contains characters outside dna: Z"</span>,
+    <span class="key">"details"</span>: {
+      <span class="key">"invalid_characters"</span>: [<span class="str">"Z"</span>],
+      <span class="key">"expected_alphabet"</span>: <span class="str">"dna"</span>
+    }
+  },
+  <span class="key">"warnings"</span>: [],
+  <span class="key">"request_id"</span>: <span class="str">"0f7c0a6e-2c5b-4a8e-9d0f-6f7a1b2c3d4e"</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsec">
+      <h3>Error codes</h3>
+      <p>Stable identifiers, meant for branching in client code rather than for display.</p>
+      <div class="codes">
+        <code>VALIDATION_ERROR</code><code>INVALID_SEQUENCE</code><code>INVALID_FASTA</code>
+        <code>INVALID_FASTQ</code><code>PARSE_ERROR</code><code>UNSUPPORTED_FORMAT</code>
+        <code>UNSUPPORTED_CONVERSION</code><code>PAYLOAD_TOO_LARGE</code><code>NOT_FOUND</code>
+        <code>UNAUTHORIZED</code><code>FORBIDDEN</code><code>RATE_LIMITED</code><code>INTERNAL_ERROR</code>
+      </div>
+    </div>
+
+    <div class="subsec">
+      <h3>Status codes</h3>
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:10%">Code</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td class="p"><code>200</code></td><td>Success.</td></tr>
+          <tr><td class="p"><code>400</code></td><td>Understood but rejected — a bad sequence, an impossible conversion.</td></tr>
+          <tr><td class="p"><code>401</code></td><td><code>X-API-Key</code> missing while a key is configured.</td></tr>
+          <tr><td class="p"><code>403</code></td><td><code>X-API-Key</code> present but wrong.</td></tr>
+          <tr><td class="p"><code>413</code></td><td>Payload above <code>MAX_UPLOAD_SIZE_MB</code>.</td></tr>
+          <tr><td class="p"><code>422</code></td><td>Schema validation failed, or a document could not be parsed.</td></tr>
+          <tr><td class="p"><code>429</code></td><td>Rate limit exceeded.</td></tr>
+          <tr><td class="p"><code>500</code></td><td>Unhandled error. Details are logged, not returned.</td></tr>
+          <tr><td class="p"><code>503</code></td><td><code>/health/ready</code> only — a dependency is unusable.</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsec">
+      <h3>Response headers</h3>
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:42%">Header</th><th>On</th></tr></thead>
+        <tbody>
+          <tr><td class="p"><code>X-Request-ID</code></td><td>Everything. Echoes an inbound value if you send one.</td></tr>
+          <tr><td class="p"><code>X-Process-Time</code></td><td>Everything, in milliseconds.</td></tr>
+          <tr><td class="p"><code>X-RateLimit-Limit</code>, <code>-Remaining</code>, <code>-Reset</code></td><td>Everything outside the exempt paths.</td></tr>
+          <tr><td class="p"><code>Retry-After</code></td><td>429 responses.</td></tr>
+          <tr><td class="p"><code>X-Records-Converted</code></td><td><code>/conversions/convert</code>, <code>/conversions/vcf-to-fasta</code></td></tr>
+          <tr><td class="p"><code>X-Conversion-Source</code>, <code>-Target</code>, <code>-Warnings</code></td><td><code>/conversions/convert</code></td></tr>
+          <tr><td class="p"><code>X-Variants-Applied</code>, <code>X-Variants-Skipped</code></td><td><code>/conversions/vcf-to-fasta</code></td></tr>
+          <tr><td class="p"><code>X-Features-Extracted</code>, <code>X-Features-Skipped</code></td><td><code>/files/extract-gff</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsec">
+      <h3>Authentication and rate limiting</h3>
+      <p>
+        An unset <code>API_KEY</code> leaves the API open. Once it is set, every
+        <code>/api/v1</code> route needs the <code>X-API-Key</code> header — missing is a 401,
+        wrong is a 403, compared in constant time. The scheme is declared in the OpenAPI
+        document, so Swagger UI renders an <em>Authorize</em> button rather than a stray
+        header field on every operation.
+      </p>
+      <p>
+        Rate limiting is a fixed window keyed on the API key when present, otherwise on
+        <code>X-Forwarded-For</code> or the peer address. The counter is per process: behind
+        several replicas each enforces its own share, so put a global limit on the ingress if
+        you need one. Exempt: <code>/health</code>, <code>/health/live</code>,
+        <code>/health/ready</code>, <code>/ready</code>, <code>/metrics</code>.
+      </p>
+    </div>
+
+    <div class="subsec">
+      <h3>Configuration</h3>
+      <p>
+        Every setting has a working default, so the container starts with no <code>.env</code>
+        at all. These are the ones that matter in production.
+      </p>
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:26%">Variable</th><th style="width:18%">Default</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="p"><code>ENVIRONMENT</code></td><td class="f"><code>development</code></td><td><code>production</code> suppresses internal error detail.</td></tr>
+          <tr><td class="p"><code>API_KEY</code></td><td class="f">unset</td><td>When set, every <code>/api/v1</code> route needs <code>X-API-Key</code>.</td></tr>
+          <tr><td class="p"><code>BACKEND_CORS_ORIGINS</code></td><td class="f"><code>*</code></td><td>Comma-separated or a JSON array. Narrow this.</td></tr>
+          <tr><td class="p"><code>MAX_UPLOAD_SIZE_MB</code></td><td class="f"><code>50</code></td><td>Checked against <code>Content-Length</code> and again while the body streams to disk, so a client that omits the header cannot fill the disk.</td></tr>
+          <tr><td class="p"><code>RATE_LIMIT_DEFAULT</code></td><td class="f"><code>120/minute</code></td><td><code>count/second|minute|hour|day</code></td></tr>
+          <tr><td class="p"><code>LOG_FORMAT</code></td><td class="f"><code>json</code></td><td><code>console</code> for readable local output.</td></tr>
+          <tr><td class="p"><code>DOCS_ENABLED</code></td><td class="f"><code>true</code></td><td><code>false</code> hides <code>/docs</code>, <code>/redoc</code> and the schema.</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsec">
+      <h3>Worked examples</h3>
+      <div class="cols" style="margin-top:1.25rem">
+        <div>
+          <p class="blocktitle">analyse a file</p>
+<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/files/stats</span> \
+  <span class="flg">-F</span> <span class="str">"file=@reads.fastq"</span></pre>
+          <p class="blocktitle" style="margin-top:1.75rem">convert fasta to genbank</p>
+<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> "<span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/conversions\
+/convert</span><span class="str">?source_format=fasta&amp;target_format=genbank</span>" \
+  <span class="flg">-F</span> <span class="str">"file=@genome.fasta"</span> <span class="flg">-o</span> genome.gb</pre>
+        </div>
+        <div>
+          <p class="blocktitle">build a consensus from a vcf</p>
+<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/conversions\
+/vcf-to-fasta</span> \
+  <span class="flg">-F</span> <span class="str">"reference_fasta=@ref.fasta"</span> \
+  <span class="flg">-F</span> <span class="str">"vcf_file=@variants.vcf"</span> <span class="flg">-o</span> consensus.fasta</pre>
+          <p class="blocktitle" style="margin-top:1.75rem">reproducible sampling</p>
+<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/fasta\
+/sample-sequences</span> \
+  <span class="flg">-H</span> <span class="str">'Content-Type: application/json'</span> \
+  <span class="flg">-d</span> <span class="str">'{"fasta_string":"&gt;a\nACGT\n&gt;b\nTTGG","n":1,"seed":42}'</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>bioAPI v0.0.1 — GPL-3.0</p>
+    <a href="index.html">Overview</a>
+    <a href="https://github.com/bhagesh-h/bioAPI">Repository</a>
+    <a href="https://github.com/bhagesh-h/bioAPI/blob/main/docs/architecture.md">Architecture</a>
+    <a href="https://github.com/bhagesh-h/bioAPI/blob/main/docs/deployment.md">Deployment</a>
+    <a href="https://github.com/bhagesh-h/bioAPI/blob/main/CHANGELOG.md">Changelog</a>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---- endpoint filter and group toggles ---- */
+  var input = document.getElementById("filter");
+  var count = document.getElementById("count");
+  var toggleAll = document.getElementById("toggle-all");
+  var groups = [].slice.call(document.querySelectorAll("[data-group]"));
+  var rows = [].slice.call(document.querySelectorAll("[data-ep]"));
+
+  rows.forEach(function (r) {
+    r.dataset.hay = r.textContent.toLowerCase().replace(/\s+/g, " ");
+  });
+
+  function refreshToggleLabel() {
+    var visible = groups.filter(function (g) { return !g.hidden; });
+    var allOpen = visible.length > 0 && visible.every(function (g) { return g.open; });
+    toggleAll.textContent = allOpen ? "Collapse all" : "Expand all";
+    toggleAll.setAttribute("aria-expanded", allOpen ? "true" : "false");
+  }
+
+  function apply() {
+    var q = input.value.trim().toLowerCase();
+    var shown = 0;
+    rows.forEach(function (r) {
+      var hit = !q || r.dataset.hay.indexOf(q) !== -1;
+      r.hidden = !hit;
+      if (hit) shown++;
+    });
+    groups.forEach(function (g) {
+      var live = g.querySelectorAll("[data-ep]:not([hidden])").length;
+      g.hidden = live === 0;
+      // A filtered group is opened so its matches are actually visible; clearing
+      // the box puts every group back to closed.
+      g.open = q ? live > 0 : false;
+      var n = g.querySelector("[data-n]");
+      if (n) n.textContent = live;
+    });
+    count.textContent = q
+      ? shown + " of " + rows.length + " endpoints"
+      : rows.length + " endpoints";
+    refreshToggleLabel();
+  }
+
+  toggleAll.addEventListener("click", function () {
+    var visible = groups.filter(function (g) { return !g.hidden; });
+    var open = !visible.every(function (g) { return g.open; });
+    visible.forEach(function (g) { g.open = open; });
+    refreshToggleLabel();
+  });
+  groups.forEach(function (g) { g.addEventListener("toggle", refreshToggleLabel); });
+
+  input.addEventListener("input", apply);
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "/" && document.activeElement !== input) {
+      e.preventDefault();
+      input.focus();
+    }
+    if (e.key === "Escape" && document.activeElement === input) {
+      input.value = "";
+      apply();
+    }
+  });
+  apply();
+})();
+</script>
+</body>
+</html>
