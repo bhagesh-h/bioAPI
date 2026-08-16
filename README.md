@@ -9,6 +9,8 @@ generation. Built on FastAPI, Biopython and pysam.
 ![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green)
 
+Endpoint reference and overview: <https://bhagesh-h.github.io/bioAPI/>
+
 **Docker is the only supported toolchain.** Every command below runs in a
 container. There is no host virtualenv to create and no `pip install` to run —
 which also means pysam's C extensions build once, in an environment where they
@@ -262,6 +264,9 @@ that matter most in production:
 
 ## Documentation
 
+- [Project site](https://bhagesh-h.github.io/bioAPI/) — the same endpoint reference as a
+  single page, published from [`site/`](site/) by
+  [`.github/workflows/pages.yml`](.github/workflows/pages.yml)
 - [Architecture](docs/architecture.md) — how the layers fit together and why
 - [API reference](docs/api-reference.md) — every endpoint, with request shapes
 - [Development](docs/development.md) — working on the code, all through Docker
