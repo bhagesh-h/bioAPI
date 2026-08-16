@@ -102,7 +102,7 @@ code { font-family: var(--mono); font-size: 0.9em; }
   text-decoration: none; letter-spacing: -0.01em;
 }
 .topnav a:hover { color: var(--ink); }
-@media (max-width: 640px) { .topnav a.opt { display: none; } }
+@media (max-width: 880px) { .topnav a.opt { display: none; } }
 @media (max-width: 560px) {
   .topbar .wrap { gap: 0.75rem; }
   .topnav { gap: 0.9rem; }
@@ -141,6 +141,7 @@ code { font-family: var(--mono); font-size: 0.9em; }
   margin-bottom: 1.4rem;
 }
 .strand-head .op { font: 500 0.8125rem/1 var(--mono); color: var(--ink); }
+.strand-head .op-path { color: var(--base-c); font-weight: 600; }
 .strand-head .note { font: 400 0.75rem/1 var(--mono); color: var(--ink-3); }
 .ladder { display: grid; gap: 0.28rem; width: max-content; min-width: 100%; }
 .rung { display: flex; align-items: center; gap: clamp(0.12rem, 0.6vw, 0.3rem); }
@@ -191,7 +192,18 @@ pre {
   font: 400 0.8125rem/1.7 var(--mono); color: var(--ink);
   tab-size: 2;
 }
-pre .c { color: var(--ink-3); }
+/* Syntax roles reuse the trace palette, so the page keeps one colour language:
+   amber = the command, blue = the address, green = the data, red = literals. */
+pre .c   { color: var(--ink-3); }                    /* comment */
+pre .cmd { color: var(--base-g); font-weight: 600; } /* the program being run */
+pre .sub { color: var(--ink); font-weight: 500; }    /* its subcommand */
+pre .flg { color: var(--ink-2); }                    /* option flags */
+pre .mth { color: var(--ink); font-weight: 600; }    /* HTTP method */
+pre .url { color: var(--ink-2); }                    /* scheme and host */
+pre .ep  { color: var(--base-c); font-weight: 600; } /* the endpoint path */
+pre .str { color: var(--base-a); }                   /* string literal */
+pre .key { color: var(--base-c); }                   /* JSON key */
+pre .lit { color: var(--base-t); }                   /* number, boolean, null */
 .blocktitle {
   font: 500 0.6875rem/1 var(--mono); letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--ink-3); margin: 0 0 0.7rem;
@@ -225,7 +237,7 @@ pre .c { color: var(--ink-3); }
 }
 .group-head h3 { font-size: 1.0625rem; letter-spacing: -0.02em; }
 .group-head .path {
-  font: 500 0.75rem/1 var(--mono); color: var(--ink-2);
+  font: 500 0.75rem/1 var(--mono); color: var(--base-c);
   background: var(--accent-soft); border: 1px solid var(--rule-2);
   border-radius: 2px; padding: 0.3rem 0.45rem;
 }
@@ -251,6 +263,9 @@ td:last-child, th:last-child { padding-right: 0; }
 }
 .m.post { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 td.p code { font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; }
+/* Only the endpoint tables get the path colour — not the status-code,
+   header and configuration tables, which also use td.p. */
+[data-group] td.p code { color: var(--base-c); }
 td.f { color: var(--ink-2); font-size: 0.875rem; }
 td.f code { color: var(--ink); white-space: nowrap; }
 .dep { font: 500 0.625rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--base-t); }
@@ -282,11 +297,11 @@ footer a:hover { color: var(--accent); text-decoration: underline; }
     <a class="mark" href="#top">bio<span>API</span></a>
     <span class="ver">v0.0.1</span>
     <nav class="topnav">
-      <a class="opt" href="#start">start</a>
-      <a class="opt" href="#what">what it does</a>
-      <a href="#endpoints">endpoints</a>
-      <a href="#reference">reference</a>
-      <a href="https://github.com/bhagesh-h/bioAPI">github&nbsp;↗</a>
+      <a class="opt" href="#getting-started">Getting started</a>
+      <a class="opt" href="#capabilities">Capabilities</a>
+      <a href="#api-reference">API reference</a>
+      <a href="#specification">Specification</a>
+      <a href="https://github.com/bhagesh-h/bioAPI">GitHub&nbsp;↗</a>
     </nav>
   </div>
 </header>
@@ -304,14 +319,14 @@ footer a:hover { color: var(--accent); text-decoration: underline; }
       shape for every endpoint. Runs in a container; there is nothing to install.
     </p>
     <div class="cta">
-      <a class="btn" href="#start">Quick start</a>
-      <a class="btn ghost" href="#endpoints">All 44 endpoints</a>
+      <a class="btn" href="#getting-started">Get started</a>
+      <a class="btn ghost" href="#api-reference">All 44 endpoints</a>
       <a class="btn ghost" href="https://github.com/bhagesh-h/bioAPI">Source</a>
     </div>
 
     <figure class="strand anim" id="strand">
       <div class="strand-head">
-        <span class="op">POST /api/v1/sequences/reverse-complement</span>
+        <span class="op">POST <span class="op-path">/api/v1/sequences/reverse-complement</span></span>
         <span class="note">the opposite strand, read 5'→3'</span>
       </div>
       <div class="ladder">
@@ -328,9 +343,9 @@ footer a:hover { color: var(--accent); text-decoration: underline; }
 </section>
 
 <!-- ============================ quick start ============================ -->
-<section class="section" id="start">
+<section class="section" id="getting-started">
   <div class="wrap">
-    <p class="eyebrow">quick start</p>
+    <p class="eyebrow">Getting started</p>
     <h2>Docker is the only supported toolchain</h2>
     <p class="lede" style="margin-top:1rem">
       pysam's C extensions build once, inside an image where they are known to work,
@@ -342,44 +357,44 @@ footer a:hover { color: var(--accent); text-decoration: underline; }
       <div>
         <p class="blocktitle">run it</p>
 <pre><span class="c"># the API comes up on 127.0.0.1:8000</span>
-git clone https://github.com/bhagesh-h/bioAPI.git
-cd bioAPI
-docker compose up api
+<span class="cmd">git</span> <span class="sub">clone</span> <span class="url">https://github.com/bhagesh-h/bioAPI.git</span>
+<span class="cmd">cd</span> bioAPI
+<span class="cmd">docker</span> <span class="sub">compose up</span> api
 
 <span class="c"># interactive docs, generated from the code</span>
-open http://127.0.0.1:8000/docs</pre>
+<span class="cmd">open</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/docs</span></pre>
         <p class="blocktitle" style="margin-top:1.75rem">call it</p>
-<pre>curl -X POST http://127.0.0.1:8000/api/v1/\
-sequences/reverse-complement \
-  -H 'Content-Type: application/json' \
-  -d '{"sequence":"ATGCGTAA","alphabet":"dna"}'</pre>
+<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/\
+sequences/reverse-complement</span> \
+  <span class="flg">-H</span> <span class="str">'Content-Type: application/json'</span> \
+  <span class="flg">-d</span> <span class="str">'{"sequence":"ATGCGTAA","alphabet":"dna"}'</span></pre>
       </div>
       <div>
         <p class="blocktitle">what comes back</p>
 <pre>{
-  "success": true,
-  "message": null,
-  "data": { "result": "TTACGCAT", "length": 8 },
-  "error": null,
-  "warnings": [],
-  "request_id": "c20b1ca5-9c54-4297-8040-a944c809bc5b"
+  <span class="key">"success"</span>: <span class="lit">true</span>,
+  <span class="key">"message"</span>: <span class="lit">null</span>,
+  <span class="key">"data"</span>: { <span class="key">"result"</span>: <span class="str">"TTACGCAT"</span>, <span class="key">"length"</span>: <span class="lit">8</span> },
+  <span class="key">"error"</span>: <span class="lit">null</span>,
+  <span class="key">"warnings"</span>: [],
+  <span class="key">"request_id"</span>: <span class="str">"c20b1ca5-9c54-4297-8040-a944c809bc5b"</span>
 }</pre>
         <p class="blocktitle" style="margin-top:1.75rem">everyday commands</p>
-<pre>make up       <span class="c"># serve on port 8000</span>
-make test     <span class="c"># suite behind a 90% coverage gate</span>
-make lint     <span class="c"># ruff + mypy --strict</span>
-make smoke    <span class="c"># start, probe /health/ready, tear down</span>
-make shell    <span class="c"># a shell in the dev image</span></pre>
+<pre><span class="cmd">make</span> <span class="sub">up</span>       <span class="c"># serve on port 8000</span>
+<span class="cmd">make</span> <span class="sub">test</span>     <span class="c"># suite behind a 90% coverage gate</span>
+<span class="cmd">make</span> <span class="sub">lint</span>     <span class="c"># ruff + mypy --strict</span>
+<span class="cmd">make</span> <span class="sub">smoke</span>    <span class="c"># start, probe /health/ready, tear down</span>
+<span class="cmd">make</span> <span class="sub">shell</span>    <span class="c"># a shell in the dev image</span></pre>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ============================ features ============================ -->
-<section class="section" id="what">
+<section class="section" id="capabilities">
   <div class="wrap">
-    <p class="eyebrow">what it does</p>
-    <h2>Six things worth knowing</h2>
+    <p class="eyebrow">Capabilities</p>
+    <h2>Core capabilities</h2>
 
     <div class="feats">
       <div class="feat">
@@ -417,10 +432,10 @@ make shell    <span class="c"># a shell in the dev image</span></pre>
 </section>
 
 <!-- ============================ endpoints ============================ -->
-<section class="section" id="endpoints">
+<section class="section" id="api-reference">
   <div class="wrap">
-    <p class="eyebrow">reference · 44 endpoints</p>
-    <h2>Every endpoint</h2>
+    <p class="eyebrow">API reference · 44 endpoints</p>
+    <h2>Endpoint reference</h2>
     <p class="lede" style="margin-top:1rem">
       Versioned routes live under <code>/api/v1</code>. Health and metadata sit at the root
       so probes never move between versions. The live OpenAPI document at
@@ -607,7 +622,7 @@ make shell    <span class="c"># a shell in the dev image</span></pre>
     <!-- ---- formats ---- -->
     <div class="group" data-group>
       <div class="group-head">
-        <h3>Capabilities</h3>
+        <h3>Formats</h3>
         <span class="path">/api/v1/formats</span>
         <span class="n" data-n>1</span>
       </div>
@@ -633,40 +648,42 @@ make shell    <span class="c"># a shell in the dev image</span></pre>
 </section>
 
 <!-- ============================ reference ============================ -->
-<section class="section" id="reference">
+<section class="section" id="specification">
   <div class="wrap">
-    <p class="eyebrow">contract</p>
-    <h2>The shape of a response</h2>
+    <p class="eyebrow">Specification</p>
+    <h2>Conventions and configuration</h2>
 
     <div class="subsec">
-      <div class="cols">
+      <h3>Response envelope</h3>
+      <p>Every JSON endpoint returns the same six fields, whether the call succeeded or not.</p>
+      <div class="cols" style="margin-top:1.25rem">
         <div>
           <p class="blocktitle">on success</p>
 <pre>{
-  "success": true,
-  "message": null,
-  "data": { },
-  "error": null,
-  "warnings": [],
-  "request_id": "0f7c0a6e-2c5b-4a8e-9d0f-6f7a1b2c3d4e"
+  <span class="key">"success"</span>: <span class="lit">true</span>,
+  <span class="key">"message"</span>: <span class="lit">null</span>,
+  <span class="key">"data"</span>: { },
+  <span class="key">"error"</span>: <span class="lit">null</span>,
+  <span class="key">"warnings"</span>: [],
+  <span class="key">"request_id"</span>: <span class="str">"0f7c0a6e-2c5b-4a8e-9d0f-6f7a1b2c3d4e"</span>
 }</pre>
         </div>
         <div>
           <p class="blocktitle">on failure — data is null, error is populated</p>
 <pre>{
-  "success": false,
-  "message": "Sequence contains characters outside dna: Z",
-  "data": null,
-  "error": {
-    "code": "INVALID_SEQUENCE",
-    "message": "Sequence contains characters outside dna: Z",
-    "details": {
-      "invalid_characters": ["Z"],
-      "expected_alphabet": "dna"
+  <span class="key">"success"</span>: <span class="lit">false</span>,
+  <span class="key">"message"</span>: <span class="str">"Sequence contains characters outside dna: Z"</span>,
+  <span class="key">"data"</span>: <span class="lit">null</span>,
+  <span class="key">"error"</span>: {
+    <span class="key">"code"</span>: <span class="str">"INVALID_SEQUENCE"</span>,
+    <span class="key">"message"</span>: <span class="str">"Sequence contains characters outside dna: Z"</span>,
+    <span class="key">"details"</span>: {
+      <span class="key">"invalid_characters"</span>: [<span class="str">"Z"</span>],
+      <span class="key">"expected_alphabet"</span>: <span class="str">"dna"</span>
     }
   },
-  "warnings": [],
-  "request_id": "0f7c0a6e-2c5b-4a8e-9d0f-6f7a1b2c3d4e"
+  <span class="key">"warnings"</span>: [],
+  <span class="key">"request_id"</span>: <span class="str">"0f7c0a6e-2c5b-4a8e-9d0f-6f7a1b2c3d4e"</span>
 }</pre>
         </div>
       </div>
@@ -767,24 +784,24 @@ make shell    <span class="c"># a shell in the dev image</span></pre>
       <div class="cols" style="margin-top:1.25rem">
         <div>
           <p class="blocktitle">analyse a file</p>
-<pre>curl -X POST http://127.0.0.1:8000/api/v1/files/stats \
-  -F "file=@reads.fastq"</pre>
+<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/files/stats</span> \
+  <span class="flg">-F</span> <span class="str">"file=@reads.fastq"</span></pre>
           <p class="blocktitle" style="margin-top:1.75rem">convert fasta to genbank</p>
-<pre>curl -X POST "http://127.0.0.1:8000/api/v1/conversions\
-/convert?source_format=fasta&amp;target_format=genbank" \
-  -F "file=@genome.fasta" -o genome.gb</pre>
+<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> "<span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/conversions\
+/convert</span><span class="str">?source_format=fasta&amp;target_format=genbank</span>" \
+  <span class="flg">-F</span> <span class="str">"file=@genome.fasta"</span> <span class="flg">-o</span> genome.gb</pre>
         </div>
         <div>
           <p class="blocktitle">build a consensus from a vcf</p>
-<pre>curl -X POST http://127.0.0.1:8000/api/v1/conversions\
-/vcf-to-fasta \
-  -F "reference_fasta=@ref.fasta" \
-  -F "vcf_file=@variants.vcf" -o consensus.fasta</pre>
+<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/conversions\
+/vcf-to-fasta</span> \
+  <span class="flg">-F</span> <span class="str">"reference_fasta=@ref.fasta"</span> \
+  <span class="flg">-F</span> <span class="str">"vcf_file=@variants.vcf"</span> <span class="flg">-o</span> consensus.fasta</pre>
           <p class="blocktitle" style="margin-top:1.75rem">reproducible sampling</p>
-<pre>curl -X POST http://127.0.0.1:8000/api/v1/fasta\
-/sample-sequences \
-  -H 'Content-Type: application/json' \
-  -d '{"fasta_string":"&gt;a\nACGT\n&gt;b\nTTGG","n":1,"seed":42}'</pre>
+<pre><span class="cmd">curl</span> <span class="flg">-X</span> <span class="mth">POST</span> <span class="url">http://127.0.0.1:8000</span><span class="ep">/api/v1/fasta\
+/sample-sequences</span> \
+  <span class="flg">-H</span> <span class="str">'Content-Type: application/json'</span> \
+  <span class="flg">-d</span> <span class="str">'{"fasta_string":"&gt;a\nACGT\n&gt;b\nTTGG","n":1,"seed":42}'</span></pre>
         </div>
       </div>
     </div>
